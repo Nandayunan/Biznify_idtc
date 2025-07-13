@@ -5,9 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useChatContext } from "./chat-context";
 import { Bot, User } from "lucide-react";
 import { useRef } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function ChatMessages() {
-  const { messages, status } = useChatContext();
+  const { messages, status, append } = useChatContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   return (
@@ -50,17 +51,64 @@ export default function ChatMessages() {
                   }`}
                 >
                   <div className="prose prose-invert max-w-none">
-                    {message.content.split("\n").map((line, i) => (
-                      <p
-                        key={i}
-                        className={`${i === 0 ? "" : "mt-2"} ${
-                          line.trim() === "" ? "h-2" : ""
-                        }`}
-                      >
-                        {line}
-                      </p>
-                    ))}
+                    {message.parts
+                      .filter((part) => part.type === "text")
+                      .flatMap((part) => part.text.split("\n"))
+                      .map((line, i) => (
+                        <p
+                          key={i}
+                          className={`${i === 0 ? "" : "mt-2"} ${
+                            line.trim() === "" ? "h-2" : ""
+                          }`}
+                        >
+                          {line}
+                        </p>
+                      ))}
                   </div>
+
+                  {message.parts
+                    .filter((part) => part.type === "tool-invocation")
+                    .filter(
+                      (tool) =>
+                        tool.toolInvocation.toolName === "generateQuestion"
+                    )
+                    .map((tool, index) => {
+                      if (tool.toolInvocation.state === "result") {
+                        return (
+                          <div
+                            key={`${tool.toolInvocation.toolCallId}-${index}`}
+                            className="mt-2"
+                          >
+                            <p className="text-xl font-bold text-white border border-white/20 rounded-lg p-2">
+                              {tool.toolInvocation.result.question}
+                            </p>
+                            <div className="mt-2 flex gap-2 flex-wrap">
+                              {tool.toolInvocation.result.options.map(
+                                (option: string) => (
+                                  <Button
+                                    key={option}
+                                    className="bg-transparent text-white border border-white/20 hover:bg-white hover:text-black"
+                                    onClick={() => {
+                                      append({
+                                        role: "user",
+                                        content: option,
+                                      });
+                                    }}
+                                  >
+                                    {option}
+                                  </Button>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={`${tool.toolInvocation.toolCallId}-${index}`}>
+                          Loading...
+                        </div>
+                      );
+                    })}
                 </div>
                 <p className="text-xs text-slate-400 mt-2 px-2">
                   {message.role === "user" ? "You" : "BizConsult AI"}
@@ -69,7 +117,7 @@ export default function ChatMessages() {
             </div>
           ))}
 
-          {status === "streaming" && (
+          {status === "submitted" && (
             <div className="flex gap-4">
               <Avatar className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-lg">
                 <AvatarFallback className="text-white">
