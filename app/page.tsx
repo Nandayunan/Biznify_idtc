@@ -42,6 +42,8 @@ export default function BusinessConsultingChat() {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  void selectedArea;
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -51,13 +53,13 @@ export default function BusinessConsultingChat() {
   }, [messages]);
 
   const handleSuggestedQuestion = (question: string) => {
-    handleSubmit(new Event("submit") as any, { data: { message: question } });
+    handleSubmit(new Event("submit"), { data: { message: question } });
   };
 
   const handleAreaClick = (area: string) => {
     setSelectedArea(area);
     const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`;
-    handleSubmit(new Event("submit") as any, { data: { message: areaPrompt } });
+    handleSubmit(new Event("submit"), { data: { message: areaPrompt } });
   };
 
   return (
@@ -100,7 +102,7 @@ export default function BusinessConsultingChat() {
 
               {/* Business Areas */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                {businessAreas.map((area, index) => (
+                {businessAreas.map((area) => (
                   <Card
                     key={area.label}
                     className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:shadow-xl group"

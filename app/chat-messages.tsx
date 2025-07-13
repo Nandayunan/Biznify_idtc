@@ -15,7 +15,7 @@ export default function ChatMessages() {
     <Card className="bg-white/5 backdrop-blur-sm border-white/10 mb-6 shadow-2xl">
       <CardContent className="p-0">
         <div className="h-[60vh] overflow-y-auto p-6 space-y-6">
-          {messages.map((message, index) => (
+          {messages.map((message) => (
             <div
               key={message.id}
               className={`flex gap-4 ${
