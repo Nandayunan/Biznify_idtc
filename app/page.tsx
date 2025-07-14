@@ -565,6 +565,10 @@ export default function BusinessConsultingChat() {
         </div>
       </div>
     </div>
+    </div>
+    </div>
+    </div>
   );
+
 
 }
