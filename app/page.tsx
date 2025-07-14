@@ -23,7 +23,8 @@ import {
 import ChatInput from "./chat-input";
 import ChatMessages from "./chat-messages";
 import { useChatContext } from "./chat-context";
-import { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation";
+import { UIMessage } from "ai";
 
 const suggestedQuestions = [
   "Bagaimana saya mengembangkan marketing saya?",
@@ -33,17 +34,17 @@ const suggestedQuestions = [
 ];
 
 interface UserPrompt {
-  id: string
-  content: string
-  timestamp: Date
-  sessionId: string
+  id: string;
+  content: string;
+  timestamp: Date;
+  sessionId: string;
 }
 
 interface ChatSession {
-  id: string
-  title: string
-  timestamp: Date
-  messages: any[]
+  id: string;
+  title: string;
+  timestamp: Date;
+  messages: UIMessage[];
 }
 
 const businessAreas = [
@@ -62,157 +63,169 @@ const businessAreas = [
 ];
 
 export default function BusinessConsultingChat() {
-  const { messages, handleSubmit, input, handleInputChange, isLoading, setMessages } = useChatContext();
+  const { messages, handleSubmit, setMessages } = useChatContext();
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [chatHistory, setChatHistory] = useState<ChatSession[]>([])
-  const [promptHistory, setPromptHistory] = useState<UserPrompt[]>([])
-  const [currentSessionId, setCurrentSessionId] = useState<string>("")
-  const [showConclusionButton, setShowConclusionButton] = useState(false)
-  const router = useRouter()
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [chatHistory, setChatHistory] = useState<ChatSession[]>([]);
+  const [promptHistory, setPromptHistory] = useState<UserPrompt[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string>("");
+  const [showConclusionButton, setShowConclusionButton] = useState(false);
+  const router = useRouter();
 
-
+  void chatHistory;
   void selectedArea;
+  void showConclusionButton;
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     // Load chat history and prompt history from localStorage
-    const savedHistory = localStorage.getItem("chatHistory")
+    const savedHistory = localStorage.getItem("chatHistory");
     if (savedHistory) {
-      const parsed = JSON.parse(savedHistory)
+      const parsed = JSON.parse(savedHistory);
       setChatHistory(
-        parsed.map((session: any) => ({
+        parsed.map((session: ChatSession) => ({
           ...session,
           timestamp: new Date(session.timestamp),
-        })),
-      )
+        }))
+      );
     }
 
-    const savedPrompts = localStorage.getItem("promptHistory")
+    const savedPrompts = localStorage.getItem("promptHistory");
     if (savedPrompts) {
-      const parsed = JSON.parse(savedPrompts)
+      const parsed = JSON.parse(savedPrompts);
       setPromptHistory(
-        parsed.map((prompt: any) => ({
+        parsed.map((prompt: UserPrompt) => ({
           ...prompt,
           timestamp: new Date(prompt.timestamp),
-        })),
-      )
+        }))
+      );
     }
 
     // Generate session ID if not exists
     if (!currentSessionId) {
-      setCurrentSessionId(Date.now().toString())
+      setCurrentSessionId(Date.now().toString());
     }
-  }, [currentSessionId])
+  }, [currentSessionId]);
 
   useEffect(() => {
     // Show conclusion button after 3+ meaningful exchanges
-    const meaningfulMessages = messages.filter((m) => m.content.length > 50)
+    const meaningfulMessages = messages.filter((m) => m.content.length > 50);
     if (meaningfulMessages.length >= 4) {
-      setShowConclusionButton(true)
+      setShowConclusionButton(true);
     }
-  }, [messages])
+  }, [messages]);
 
   useEffect(() => {
     // Save current session to history when messages change
     if (messages.length > 0 && currentSessionId) {
-      const sessionTitle = messages[0]?.content.substring(0, 50) + "..." || "New Chat"
+      const sessionTitle =
+        messages[0]?.content.substring(0, 50) + "..." || "New Chat";
       const currentSession: ChatSession = {
         id: currentSessionId,
         title: sessionTitle,
         timestamp: new Date(),
         messages: messages,
-      }
+      };
 
       setChatHistory((prev) => {
-        const filtered = prev.filter((session) => session.id !== currentSessionId)
-        const updated = [currentSession, ...filtered].slice(0, 20) // Keep last 20 sessions
-        localStorage.setItem("chatHistory", JSON.stringify(updated))
-        return updated
-      })
+        const filtered = prev.filter(
+          (session) => session.id !== currentSessionId
+        );
+        const updated = [currentSession, ...filtered].slice(0, 20); // Keep last 20 sessions
+        localStorage.setItem("chatHistory", JSON.stringify(updated));
+        return updated;
+      });
 
       // Extract and save user prompts
-      const userMessages = messages.filter((m) => m.role === "user")
+      const userMessages = messages.filter((m) => m.role === "user");
       const newPrompts: UserPrompt[] = userMessages.map((msg) => ({
         id: msg.id,
         content: msg.content,
         timestamp: new Date(),
         sessionId: currentSessionId,
-      }))
+      }));
 
       setPromptHistory((prev) => {
         // Remove existing prompts from current session and add new ones
-        const filtered = prev.filter((prompt) => prompt.sessionId !== currentSessionId)
-        const updated = [...newPrompts, ...filtered].slice(0, 50) // Keep last 50 prompts
-        localStorage.setItem("promptHistory", JSON.stringify(updated))
-        return updated
-      })
+        const filtered = prev.filter(
+          (prompt) => prompt.sessionId !== currentSessionId
+        );
+        const updated = [...newPrompts, ...filtered].slice(0, 50); // Keep last 50 prompts
+        localStorage.setItem("promptHistory", JSON.stringify(updated));
+        return updated;
+      });
     }
-  }, [messages, currentSessionId])
+  }, [messages, currentSessionId]);
 
   const handleSuggestedQuestion = (question: string) => {
-    handleSubmit(new Event("submit") as any, { data: { message: question } })
-  }
+    handleSubmit(new Event("submit"), { data: { message: question } });
+  };
 
   const handleAreaClick = (area: string) => {
-    setSelectedArea(area)
-    const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`
-    handleSubmit(new Event("submit") as any, { data: { message: areaPrompt } })
-  }
+    setSelectedArea(area);
+    const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`;
+    handleSubmit(new Event("submit"), { data: { message: areaPrompt } });
+  };
 
   const handleCreateConclusion = () => {
-    sessionStorage.setItem("chatMessages", JSON.stringify(messages))
-    router.push("/conclusion")
-  }
+    sessionStorage.setItem("chatMessages", JSON.stringify(messages));
+    router.push("/conclusion");
+  };
+
+  void handleCreateConclusion;
 
   const loadChatSession = (session: ChatSession) => {
-    setMessages(session.messages)
-    setCurrentSessionId(session.id)
-    setSidebarOpen(false)
-  }
+    setMessages(session.messages);
+    setCurrentSessionId(session.id);
+    setSidebarOpen(false);
+  };
+
+  void loadChatSession;
 
   const startNewChat = () => {
-    setMessages([])
-    setCurrentSessionId(Date.now().toString())
-    setShowConclusionButton(false)
-    setSidebarOpen(false)
-  }
+    setMessages([]);
+    setCurrentSessionId(Date.now().toString());
+    setShowConclusionButton(false);
+    setSidebarOpen(false);
+  };
 
   const deletePrompt = (promptId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+    e.stopPropagation();
     setPromptHistory((prev) => {
-      const updated = prev.filter((prompt) => prompt.id !== promptId)
-      localStorage.setItem("promptHistory", JSON.stringify(updated))
-      return updated
-    })
-  }
+      const updated = prev.filter((prompt) => prompt.id !== promptId);
+      localStorage.setItem("promptHistory", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   const reusePrompt = (prompt: UserPrompt) => {
-    handleSubmit(new Event("submit") as any, { data: { message: prompt.content } })
-    setSidebarOpen(false)
-  }
+    handleSubmit(new Event("submit"), { data: { message: prompt.content } });
+    setSidebarOpen(false);
+  };
 
   const formatTimestamp = (date: Date) => {
-    const now = new Date()
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
-    if (diffInHours < 1) return "Just now"
-    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`
-    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`
-    return date.toLocaleDateString()
-  }
+    if (diffInHours < 1) return "Just now";
+    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`;
+    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
+    return date.toLocaleDateString();
+  };
 
   const truncateText = (text: string, maxLength: number) => {
-    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text
-  }
+    return text.length > maxLength
+      ? text.substring(0, maxLength) + "..."
+      : text;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
@@ -241,11 +254,12 @@ export default function BusinessConsultingChat() {
                 asisten digital bisnis Anda
               </p>
             </div>
-
           </div>
           {/* Sidebar - Prompt History */}
           <div
-            className={`fixed inset-y-0 left-0 z-50 w-80 bg-black/20 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+            className={`fixed inset-y-0 left-0 z-50 w-80 bg-black/20 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
           >
             <div className="flex flex-col h-full">
               {/* Sidebar Header */}
@@ -255,7 +269,9 @@ export default function BusinessConsultingChat() {
                     <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                       <History className="w-4 h-4 text-white" />
                     </div>
-                    <h2 className="text-xl font-bold text-white">Prompt History</h2>
+                    <h2 className="text-xl font-bold text-white">
+                      Prompt History
+                    </h2>
                   </div>
                   <Button
                     onClick={() => setSidebarOpen(false)}
@@ -282,7 +298,9 @@ export default function BusinessConsultingChat() {
                     <div className="text-center py-8">
                       <History className="w-12 h-12 text-slate-500 mx-auto mb-3" />
                       <p className="text-slate-400 text-sm">No prompts yet</p>
-                      <p className="text-slate-500 text-xs">Your questions will appear here</p>
+                      <p className="text-slate-500 text-xs">
+                        Your questions will appear here
+                      </p>
                     </div>
                   ) : (
                     promptHistory.map((prompt) => (
@@ -310,8 +328,12 @@ export default function BusinessConsultingChat() {
                             <Trash2 className="w-3 h-3" />
                           </Button>
                         </div>
-                        <p className="text-white text-sm leading-relaxed">{truncateText(prompt.content, 120)}</p>
-                        <div className="mt-2 text-xs text-slate-500">Click to reuse this prompt</div>
+                        <p className="text-white text-sm leading-relaxed">
+                          {truncateText(prompt.content, 120)}
+                        </p>
+                        <div className="mt-2 text-xs text-slate-500">
+                          Click to reuse this prompt
+                        </div>
                       </div>
                     ))
                   )}
@@ -322,11 +344,18 @@ export default function BusinessConsultingChat() {
 
           {/* Sidebar Overlay */}
           {sidebarOpen && (
-            <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+            <div
+              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
           )}
 
           {/* Main Content - Adjusts based on sidebar state */}
-          <div className={`flex-1 relative z-10 transition-all duration-300 ${sidebarOpen ? "lg:ml-80" : "ml-0"}`}>
+          <div
+            className={`flex-1 relative z-10 transition-all duration-300 ${
+              sidebarOpen ? "lg:ml-80" : "ml-0"
+            }`}
+          >
             <div className="container mx-auto px-4 py-8 max-w-4xl">
               {/* Header */}
               <div className="text-center mb-8">
@@ -340,24 +369,18 @@ export default function BusinessConsultingChat() {
                     <span className="hidden sm:inline">Prompts</span>
                   </Button>
                   <div className="flex-1 flex justify-center">
-                    <div className="inline-flex items-center gap-3">
-
-
-
-                    </div>
+                    <div className="inline-flex items-center gap-3"></div>
                   </div>
                   <div className="w-20"></div> {/* Spacer for balance */}
                 </div>
 
-
-
                 {messages.length === 0 && (
                   <>
                     <p className="text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
-                      chatbot pintar berbasis AI yang dirancang khusus untuk membantu
-                      pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) dalam
-                      mengembangkan strategi bisnis yang lebih efisien, tepat sasaran,
-                      dan berkelanjutan.
+                      chatbot pintar berbasis AI yang dirancang khusus untuk
+                      membantu pelaku Usaha Mikro, Kecil, dan Menengah (UMKM)
+                      dalam mengembangkan strategi bisnis yang lebih efisien,
+                      tepat sasaran, dan berkelanjutan.
                     </p>
 
                     {/* Business Areas */}
@@ -413,7 +436,9 @@ export default function BusinessConsultingChat() {
 
               {/* Footer */}
               <div className="text-center mt-6">
-                <p className="text-slate-500 text-xs">copyright | BizConsult 2025</p>
+                <p className="text-slate-500 text-xs">
+                  copyright | BizConsult 2025
+                </p>
               </div>
             </div>
           </div>
@@ -422,5 +447,4 @@ export default function BusinessConsultingChat() {
       </div>
     </div>
   );
-
 }
