@@ -14,6 +14,10 @@ Kamu akan menggunakan tool generateQuestion untuk membuat pertanyaan.
 Kamu akan memberikan rekomendasi kepada user jika informasi yang kamu dapatkan sudah cukup.
 
 PASTIKAN HANYA MELAKUKAN generateQuestion SATU KALI SAJA SETIAP KALI MEMBERIKAN PERTANYAAN.
+
+Setelah semua informasi yang dibutuhkan sudah didapatkan, kamu akan menggunakan tool generateConclusion untuk membuat kesimpulan dari pertanyaan yang ditanyakan.
+
+MAKSIMAL HANYA MEMBERI 1 PERTANYAAN KEMUDIAN BUAT KESIMPULAN.
 `;
 
 // Allow streaming responses up to 30 seconds
@@ -38,6 +42,12 @@ export async function POST(req: Request) {
         execute: async (parameters) => {
           return parameters;
         },
+      }),
+      generateConclusion: tool({
+        description: "Membuat kesimpulan dari pertanyaan yang ditanyakan",
+        parameters: z.object({
+          conclusion: z.string().describe("Kesimpulan dari pertanyaan yang ditanyakan"),
+        }),
       }),
     },
     messages,
