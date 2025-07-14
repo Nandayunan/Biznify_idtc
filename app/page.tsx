@@ -5,6 +5,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+// import { ScrollArea } from "@/components/ui/scroll-area";
+import { User } from "lucide-react";
 import {
   Bot,
   Sparkles,
@@ -12,6 +15,12 @@ import {
   Target,
   DollarSign,
   Users,
+  Menu,
+  X,
+  MessageSquare,
+  Clock,
+  Trash2,
+  History,
 } from "lucide-react";
 import ChatInput from "./chat-input";
 import ChatMessages from "./chat-messages";
@@ -30,6 +39,7 @@ declare global {
     }
   }
 }
+import { useRouter } from "next/navigation"
 
 const suggestedQuestions = [
   "Bagaimana saya mengembangkan marketing saya?",
@@ -37,6 +47,20 @@ const suggestedQuestions = [
   "Bagaimana cara meningkatkan produktivitas tim saya?",
   "apa strategi terbaik untuk meningkatkan penjualan?",
 ];
+
+interface UserPrompt {
+  id: string
+  content: string
+  timestamp: Date
+  sessionId: string
+}
+
+interface ChatSession {
+  id: string
+  title: string
+  timestamp: Date
+  messages: any[]
+}
 
 const businessAreas = [
   {
@@ -169,29 +193,157 @@ const SplineViewer: React.FC<SplineViewerProps> = ({ url, className = "" }) => {
 };
 
 export default function BusinessConsultingChat() {
-  const { messages, handleSubmit } = useChatContext();
+  const { messages, handleSubmit, input, handleInputChange, isLoading, setMessages } = useChatContext();
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [chatHistory, setChatHistory] = useState<ChatSession[]>([])
+  const [promptHistory, setPromptHistory] = useState<UserPrompt[]>([])
+  const [currentSessionId, setCurrentSessionId] = useState<string>("")
+  const [showConclusionButton, setShowConclusionButton] = useState(false)
+  const router = useRouter()
+
 
   void selectedArea;
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    scrollToBottom()
+  }, [messages])
+
+  useEffect(() => {
+    // Load chat history and prompt history from localStorage
+    const savedHistory = localStorage.getItem("chatHistory")
+    if (savedHistory) {
+      const parsed = JSON.parse(savedHistory)
+      setChatHistory(
+        parsed.map((session: any) => ({
+          ...session,
+          timestamp: new Date(session.timestamp),
+        })),
+      )
+    }
+
+    const savedPrompts = localStorage.getItem("promptHistory")
+    if (savedPrompts) {
+      const parsed = JSON.parse(savedPrompts)
+      setPromptHistory(
+        parsed.map((prompt: any) => ({
+          ...prompt,
+          timestamp: new Date(prompt.timestamp),
+        })),
+      )
+    }
+
+    // Generate session ID if not exists
+    if (!currentSessionId) {
+      setCurrentSessionId(Date.now().toString())
+    }
+  }, [currentSessionId])
+
+  useEffect(() => {
+    // Show conclusion button after 3+ meaningful exchanges
+    const meaningfulMessages = messages.filter((m) => m.content.length > 50)
+    if (meaningfulMessages.length >= 4) {
+      setShowConclusionButton(true)
+    }
+  }, [messages])
+
+  useEffect(() => {
+    // Save current session to history when messages change
+    if (messages.length > 0 && currentSessionId) {
+      const sessionTitle = messages[0]?.content.substring(0, 50) + "..." || "New Chat"
+      const currentSession: ChatSession = {
+        id: currentSessionId,
+        title: sessionTitle,
+        timestamp: new Date(),
+        messages: messages,
+      }
+
+      setChatHistory((prev) => {
+        const filtered = prev.filter((session) => session.id !== currentSessionId)
+        const updated = [currentSession, ...filtered].slice(0, 20) // Keep last 20 sessions
+        localStorage.setItem("chatHistory", JSON.stringify(updated))
+        return updated
+      })
+
+      // Extract and save user prompts
+      const userMessages = messages.filter((m) => m.role === "user")
+      const newPrompts: UserPrompt[] = userMessages.map((msg) => ({
+        id: msg.id,
+        content: msg.content,
+        timestamp: new Date(),
+        sessionId: currentSessionId,
+      }))
+
+      setPromptHistory((prev) => {
+        // Remove existing prompts from current session and add new ones
+        const filtered = prev.filter((prompt) => prompt.sessionId !== currentSessionId)
+        const updated = [...newPrompts, ...filtered].slice(0, 50) // Keep last 50 prompts
+        localStorage.setItem("promptHistory", JSON.stringify(updated))
+        return updated
+      })
+    }
+  }, [messages, currentSessionId])
 
   const handleSuggestedQuestion = (question: string) => {
-    handleSubmit(new Event("submit"), { data: { message: question } });
-  };
+    handleSubmit(new Event("submit") as any, { data: { message: question } })
+  }
 
   const handleAreaClick = (area: string) => {
-    setSelectedArea(area);
-    const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`;
-    handleSubmit(new Event("submit"), { data: { message: areaPrompt } });
-  };
+    setSelectedArea(area)
+    const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`
+    handleSubmit(new Event("submit") as any, { data: { message: areaPrompt } })
+  }
+
+  const handleCreateConclusion = () => {
+    sessionStorage.setItem("chatMessages", JSON.stringify(messages))
+    router.push("/conclusion")
+  }
+
+  const loadChatSession = (session: ChatSession) => {
+    setMessages(session.messages)
+    setCurrentSessionId(session.id)
+    setSidebarOpen(false)
+  }
+
+  const startNewChat = () => {
+    setMessages([])
+    setCurrentSessionId(Date.now().toString())
+    setShowConclusionButton(false)
+    setSidebarOpen(false)
+  }
+
+  const deletePrompt = (promptId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setPromptHistory((prev) => {
+      const updated = prev.filter((prompt) => prompt.id !== promptId)
+      localStorage.setItem("promptHistory", JSON.stringify(updated))
+      return updated
+    })
+  }
+
+  const reusePrompt = (prompt: UserPrompt) => {
+    handleSubmit(new Event("submit") as any, { data: { message: prompt.content } })
+    setSidebarOpen(false)
+  }
+
+  const formatTimestamp = (date: Date) => {
+    const now = new Date()
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+
+    if (diffInHours < 1) return "Just now"
+    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`
+    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`
+    return date.toLocaleDateString()
+  }
+
+  const truncateText = (text: string, maxLength: number) => {
+    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
@@ -229,7 +381,115 @@ export default function BusinessConsultingChat() {
                 asisten digital bisnis Anda
               </p>
             </div>
+
           </div>
+          {/* Sidebar - Prompt History */}
+          <div
+            className={`fixed inset-y-0 left-0 z-50 w-80 bg-black/20 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+          >
+            <div className="flex flex-col h-full">
+              {/* Sidebar Header */}
+              <div className="p-6 border-b border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                      <History className="w-4 h-4 text-white" />
+                    </div>
+                    <h2 className="text-xl font-bold text-white">Prompt History</h2>
+                  </div>
+                  <Button
+                    onClick={() => setSidebarOpen(false)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:bg-white/10 rounded-lg"
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+                <Button
+                  onClick={startNewChat}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  New Chat
+                </Button>
+              </div>
+
+              {/* Prompt History List */}
+              <div className="flex-1 p-4 overflow-y-auto max-h-screen">
+                <div className="space-y-3">
+                  {promptHistory.length === 0 ? (
+                    <div className="text-center py-8">
+                      <History className="w-12 h-12 text-slate-500 mx-auto mb-3" />
+                      <p className="text-slate-400 text-sm">No prompts yet</p>
+                      <p className="text-slate-500 text-xs">Your questions will appear here</p>
+                    </div>
+                  ) : (
+                    promptHistory.map((prompt) => (
+                      <div
+                        key={prompt.id}
+                        onClick={() => reusePrompt(prompt)}
+                        className="group p-4 rounded-xl cursor-pointer transition-all duration-200 hover:bg-white/10 bg-white/5 border border-white/10 hover:border-white/20"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                              <User className="w-3 h-3 text-white" />
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-slate-400">
+                              <Clock className="w-3 h-3" />
+                              {formatTimestamp(prompt.timestamp)}
+                            </div>
+                          </div>
+                          <Button
+                            onClick={(e) => deletePrompt(prompt.id, e)}
+                            variant="ghost"
+                            size="sm"
+                            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 p-1 h-auto"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <p className="text-white text-sm leading-relaxed">{truncateText(prompt.content, 120)}</p>
+                        <div className="mt-2 text-xs text-slate-500">Click to reuse this prompt</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar Overlay */}
+          {sidebarOpen && (
+            <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+          )}
+
+          {/* Main Content - Adjusts based on sidebar state */}
+          <div className={`flex-1 relative z-10 transition-all duration-300 ${sidebarOpen ? "lg:ml-80" : "ml-0"}`}>
+            <div className="container mx-auto px-4 py-8 max-w-4xl">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <Button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    variant="ghost"
+                    className="text-white hover:bg-white/10 rounded-xl"
+                  >
+                    <Menu className="w-100 h-50 mr-2" />
+                    <span className="hidden sm:inline">Prompts</span>
+                  </Button>
+                  <div className="flex-1 flex justify-center">
+                    <div className="inline-flex items-center gap-3">
+
+
+
+                    </div>
+                  </div>
+                  <div className="w-20"></div> {/* Spacer for balance */}
+                </div>
+
+
 
           {messages.length === 0 && (
             <>
@@ -240,27 +500,27 @@ export default function BusinessConsultingChat() {
                 dan berkelanjutan.
               </p>
 
-              {/* Business Areas */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                {businessAreas.map((area) => (
-                  <Card
-                    key={area.label}
-                    className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:shadow-xl group"
-                    onClick={() => handleAreaClick(area.label)}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <div
-                        className={`w-12 h-12 bg-gradient-to-r ${area.color} rounded-lg flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:shadow-xl transition-shadow duration-300`}
-                      >
-                        <area.icon className="w-6 h-6 text-white" />
-                      </div>
-                      <p className="text-white text-sm font-medium">
-                        {area.label}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    {/* Business Areas */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                      {businessAreas.map((area) => (
+                        <Card
+                          key={area.label}
+                          className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:shadow-xl group"
+                          onClick={() => handleAreaClick(area.label)}
+                        >
+                          <CardContent className="p-4 text-center">
+                            <div
+                              className={`w-12 h-12 bg-gradient-to-r ${area.color} rounded-lg flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:shadow-xl transition-shadow duration-300`}
+                            >
+                              <area.icon className="w-6 h-6 text-white" />
+                            </div>
+                            <p className="text-white text-sm font-medium">
+                              {area.label}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
 
               {/* Suggested Questions */}
               <div className="space-y-3">
@@ -306,4 +566,5 @@ export default function BusinessConsultingChat() {
       </div>
     </div>
   );
+
 }
