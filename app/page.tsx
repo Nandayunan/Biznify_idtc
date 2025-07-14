@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,9 +30,12 @@ import { useChatContext } from "./chat-context";
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      'spline-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+      "spline-viewer": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      > & {
         url?: string;
-        'events-target'?: string;
+        "events-target"?: string;
         loading?: string;
       };
     }
@@ -84,32 +87,37 @@ const useSplineLoader = () => {
 
   useEffect(() => {
     // Check if script already exists
-    const existingScript = document.querySelector('script[src*="spline-viewer"]');
-    
+    const existingScript = document.querySelector(
+      'script[src*="spline-viewer"]'
+    );
+
     if (existingScript) {
       setIsLoaded(true);
       return;
     }
 
     // Create and load script
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.src = 'https://unpkg.com/@splinetool/viewer@1.10.27/build/spline-viewer.js';
+    const script = document.createElement("script");
+    script.type = "module";
+    script.src =
+      "https://unpkg.com/@splinetool/viewer@1.10.27/build/spline-viewer.js";
     script.async = true;
-    
+
     script.onload = () => {
       setIsLoaded(true);
     };
-    
+
     script.onerror = () => {
-      console.error('Failed to load Spline viewer');
+      console.error("Failed to load Spline viewer");
     };
 
     document.head.appendChild(script);
 
     return () => {
       // Cleanup on unmount
-      const scriptToRemove = document.querySelector('script[src*="spline-viewer"]');
+      const scriptToRemove = document.querySelector(
+        'script[src*="spline-viewer"]'
+      );
       if (scriptToRemove) {
         document.head.removeChild(scriptToRemove);
       }
@@ -140,14 +148,14 @@ const SplineViewer: React.FC<SplineViewerProps> = ({ url, className = "" }) => {
   useEffect(() => {
     if (isSplineLoaded && splineRef.current) {
       // Make sure the custom element is properly recognized
-      if (!customElements.get('spline-viewer')) {
+      if (!customElements.get("spline-viewer")) {
         // Wait a bit for the script to fully register the custom element
         setTimeout(() => {
           if (splineRef.current) {
-            splineRef.current.setAttribute('url', url);
-            
+            splineRef.current.setAttribute("url", url);
+
             // Add event listener untuk akses ke spline app setelah load
-            splineRef.current.addEventListener('load', () => {
+            splineRef.current.addEventListener("load", () => {
               try {
                 // Akses spline app untuk mengatur kamera
                 const splineApp = splineRef.current?.spline;
@@ -156,11 +164,11 @@ const SplineViewer: React.FC<SplineViewerProps> = ({ url, className = "" }) => {
                   splineApp.setZoom(1);
                   // Jika ada fungsi untuk reset kamera orientation
                   if (splineApp.emitEvent) {
-                    splineApp.emitEvent('resetCamera');
+                    splineApp.emitEvent("resetCamera");
                   }
                 }
               } catch (error) {
-                console.log('Spline camera adjustment not available:', error);
+                console.log("Spline camera adjustment not available:", error);
               }
             });
           }
@@ -177,19 +185,19 @@ const SplineViewer: React.FC<SplineViewerProps> = ({ url, className = "" }) => {
     );
   }
 
-  return React.createElement('spline-viewer', {
+  return React.createElement("spline-viewer", {
     ref: splineRef,
     url: url,
     className: className,
     style: {
-      width: '100%',
-      height: '100%',
-      display: 'block',
-      transform: 'translate(90px, 100px)',
-      transformOrigin: 'center center'
+      width: "100%",
+      height: "100%",
+      display: "block",
+      transform: "translate(90px, 100px)",
+      transformOrigin: "center center",
     },
-    loading: 'lazy',
-    'events-target': 'global'
+    loading: "lazy",
+    "events-target": "global",
   });
 };
 
@@ -369,10 +377,9 @@ export default function BusinessConsultingChat() {
 
       {/* 3D Spline Background - Digeser ke kanan */}
       <div className="absolute inset-0 z-0">
-        <SplineViewer 
+        <SplineViewer
           url="https://prod.spline.design/y0EnxvXrPRsZpMhP/scene.splinecode"
           className="w-full h-full opacity-30"
-          
         />
       </div>
 
@@ -514,15 +521,14 @@ export default function BusinessConsultingChat() {
                   <div className="w-20"></div> {/* Spacer for balance */}
                 </div>
 
-
-          {messages.length === 0 && (
-            <>
-              <p className="text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed backdrop-blur-sm bg-black/20 rounded-lg p-4">
-                Chatbot pintar berbasis AI yang dirancang khusus untuk membantu
-                pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) dalam
-                mengembangkan strategi bisnis yang lebih efisien, tepat sasaran,
-                dan berkelanjutan.
-              </p>
+                {messages.length === 0 && (
+                  <>
+                    <p className="text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed backdrop-blur-sm bg-black/20 rounded-lg p-4">
+                      Chatbot pintar berbasis AI yang dirancang khusus untuk
+                      membantu pelaku Usaha Mikro, Kecil, dan Menengah (UMKM)
+                      dalam mengembangkan strategi bisnis yang lebih efisien,
+                      tepat sasaran, dan berkelanjutan.
+                    </p>
 
                     {/* Business Areas */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -546,41 +552,40 @@ export default function BusinessConsultingChat() {
                       ))}
                     </div>
 
-              {/* Suggested Questions */}
-              <div className="space-y-3">
-                <p className="text-slate-400 text-sm font-medium flex items-center justify-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Coba pertanyaan berikut untuk memulai:
-                </p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {suggestedQuestions.map((question, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="bg-white/10 hover:bg-white/20 text-white border-white/20 cursor-pointer transition-all duration-300 hover:scale-105 px-4 py-2 backdrop-blur-sm"
-                      onClick={() => handleSuggestedQuestion(question)}
-                    >
-                      {question}
-                    </Badge>
-                  ))}
-                </div>
+                    {/* Suggested Questions */}
+                    <div className="space-y-3">
+                      <p className="text-slate-400 text-sm font-medium flex items-center justify-center gap-2">
+                        <Sparkles className="w-4 h-4" />
+                        Coba pertanyaan berikut untuk memulai:
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {suggestedQuestions.map((question, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="bg-white/10 hover:bg-white/20 text-white border-white/20 cursor-pointer transition-all duration-300 hover:scale-105 px-4 py-2 backdrop-blur-sm"
+                            onClick={() => handleSuggestedQuestion(question)}
+                          >
+                            {question}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-            </>
-          )}
-        </div>
 
-        {/* Chat Messages */}
-        {messages.length > 0 && (
-          <div className="backdrop-blur-sm bg-black/20 rounded-lg">
-            <ChatMessages />
-          </div>
-        )}
+              {/* Chat Messages */}
+              {messages.length > 0 && (
+                <div className="backdrop-blur-sm bg-black/20 rounded-lg">
+                  <ChatMessages />
+                </div>
+              )}
 
-        {/* Input Form */}
-        <div className="backdrop-blur-sm bg-black/20 rounded-lg p-2">
-          <ChatInput />
-        </div>
-
+              {/* Input Form */}
+              <div className="backdrop-blur-sm bg-black/20 rounded-lg p-2">
+                <ChatInput />
+              </div>
 
               {/* Footer */}
               <div className="text-center mt-6">
@@ -594,9 +599,5 @@ export default function BusinessConsultingChat() {
         </div>
       </div>
     </div>
-    </div>
-    </div>
-    </div>
   );
-
 }
