@@ -208,7 +208,7 @@ export default function BusinessConsultingChat() {
           {messages.length === 0 && (
             <>
               <p className="text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed backdrop-blur-sm bg-black/20 rounded-lg p-4">
-                chatbot pintar berbasis AI yang dirancang khusus untuk membantu
+                Chatbot pintar berbasis AI yang dirancang khusus untuk membantu
                 pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) dalam
                 mengembangkan strategi bisnis yang lebih efisien, tepat sasaran,
                 dan berkelanjutan.
@@ -273,7 +273,9 @@ export default function BusinessConsultingChat() {
 
         {/* Footer */}
         <div className="text-center mt-20">
-          <p className="text-slate-500 text-xs">Copyright | Biznify 2025</p>
+          <p className="text-slate-500 text-xs">
+            © {new Date().getFullYear()} | Biznify
+          </p>
         </div>
       </div>
     </div>
