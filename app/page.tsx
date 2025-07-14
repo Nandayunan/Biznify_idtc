@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-namespace */
+
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +16,20 @@ import {
 import ChatInput from "./chat-input";
 import ChatMessages from "./chat-messages";
 import { useChatContext } from "./chat-context";
+import React from "react";
+
+// Declare custom elements for TypeScript
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'spline-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        url?: string;
+        'events-target'?: string;
+        loading?: string;
+      };
+    }
+  }
+}
 
 const suggestedQuestions = [
   "Bagaimana saya mengembangkan marketing saya?",
@@ -78,10 +94,23 @@ const useSplineLoader = () => {
   return isLoaded;
 };
 
+// Add TypeScript interface for SplineViewer props
+interface SplineViewerProps {
+  url: string;
+  className?: string;
+}
+
+interface SplineElement extends HTMLElement {
+  spline?: {
+    setZoom: (zoom: number) => void;
+    emitEvent: (eventName: string) => void;
+  };
+}
+
 // Spline Viewer Component
-const SplineViewer = ({ url, className = "" }) => {
+const SplineViewer: React.FC<SplineViewerProps> = ({ url, className = "" }) => {
   const isSplineLoaded = useSplineLoader();
-  const splineRef = useRef(null);
+  const splineRef = useRef<SplineElement | null>(null);
 
   useEffect(() => {
     if (isSplineLoaded && splineRef.current) {
@@ -96,7 +125,7 @@ const SplineViewer = ({ url, className = "" }) => {
             splineRef.current.addEventListener('load', () => {
               try {
                 // Akses spline app untuk mengatur kamera
-                const splineApp = splineRef.current.spline;
+                const splineApp = splineRef.current?.spline;
                 if (splineApp) {
                   // Reset kamera ke posisi default atau sesuai scene
                   splineApp.setZoom(1);
@@ -123,23 +152,20 @@ const SplineViewer = ({ url, className = "" }) => {
     );
   }
 
-  return (
-    <spline-viewer
-      ref={splineRef}
-      url={url}
-      className={className}
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'block',
-        transform: 'translate(90px, 100px)', // Geser ke kanan 200px
-        transformOrigin: 'center center'
-      }}
-      // Tambahkan attributes yang mungkin membantu orientasi
-      loading="lazy"
-      events-target="global"
-    />
-  );
+  return React.createElement('spline-viewer', {
+    ref: splineRef,
+    url: url,
+    className: className,
+    style: {
+      width: '100%',
+      height: '100%',
+      display: 'block',
+      transform: 'translate(90px, 100px)',
+      transformOrigin: 'center center'
+    },
+    loading: 'lazy',
+    'events-target': 'global'
+  });
 };
 
 export default function BusinessConsultingChat() {
