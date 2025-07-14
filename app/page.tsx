@@ -37,6 +37,111 @@ const businessAreas = [
   { icon: Users, label: "Management", color: "from-blue-400 to-indigo-400" },
 ];
 
+// Custom hook untuk load Spline script
+const useSplineLoader = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Check if script already exists
+    const existingScript = document.querySelector('script[src*="spline-viewer"]');
+    
+    if (existingScript) {
+      setIsLoaded(true);
+      return;
+    }
+
+    // Create and load script
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://unpkg.com/@splinetool/viewer@1.10.27/build/spline-viewer.js';
+    script.async = true;
+    
+    script.onload = () => {
+      setIsLoaded(true);
+    };
+    
+    script.onerror = () => {
+      console.error('Failed to load Spline viewer');
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      // Cleanup on unmount
+      const scriptToRemove = document.querySelector('script[src*="spline-viewer"]');
+      if (scriptToRemove) {
+        document.head.removeChild(scriptToRemove);
+      }
+    };
+  }, []);
+
+  return isLoaded;
+};
+
+// Spline Viewer Component
+const SplineViewer = ({ url, className = "" }) => {
+  const isSplineLoaded = useSplineLoader();
+  const splineRef = useRef(null);
+
+  useEffect(() => {
+    if (isSplineLoaded && splineRef.current) {
+      // Make sure the custom element is properly recognized
+      if (!customElements.get('spline-viewer')) {
+        // Wait a bit for the script to fully register the custom element
+        setTimeout(() => {
+          if (splineRef.current) {
+            splineRef.current.setAttribute('url', url);
+            
+            // Add event listener untuk akses ke spline app setelah load
+            splineRef.current.addEventListener('load', () => {
+              try {
+                // Akses spline app untuk mengatur kamera
+                const splineApp = splineRef.current.spline;
+                if (splineApp) {
+                  // Reset kamera ke posisi default atau sesuai scene
+                  splineApp.setZoom(1);
+                  // Jika ada fungsi untuk reset kamera orientation
+                  if (splineApp.emitEvent) {
+                    splineApp.emitEvent('resetCamera');
+                  }
+                }
+              } catch (error) {
+                console.log('Spline camera adjustment not available:', error);
+              }
+            });
+          }
+        }, 100);
+      }
+    }
+  }, [isSplineLoaded, url]);
+
+  if (!isSplineLoaded) {
+    return (
+      <div className={`flex items-center justify-center ${className}`}>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/50"></div>
+      </div>
+    );
+  }
+
+  return (
+    <spline-viewer
+      ref={splineRef}
+      url={url}
+      className={className}
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'block',
+        transform: 'translate(90px, 100px)', // Geser ke kanan 200px
+        transformOrigin: 'center center'
+      }}
+      // Tambahkan attributes yang mungkin membantu orientasi
+      loading="lazy"
+      events-target="global"
+    />
+  );
+};
+
 export default function BusinessConsultingChat() {
   const { messages, handleSubmit } = useChatContext();
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
@@ -71,6 +176,15 @@ export default function BusinessConsultingChat() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse delay-500"></div>
       </div>
 
+      {/* 3D Spline Background - Digeser ke kanan */}
+      <div className="absolute inset-0 z-0">
+        <SplineViewer 
+          url="https://prod.spline.design/y0EnxvXrPRsZpMhP/scene.splinecode"
+          className="w-full h-full opacity-30"
+          
+        />
+      </div>
+
       <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="text-center mb-8">
@@ -93,7 +207,7 @@ export default function BusinessConsultingChat() {
 
           {messages.length === 0 && (
             <>
-              <p className="text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed backdrop-blur-sm bg-black/20 rounded-lg p-4">
                 chatbot pintar berbasis AI yang dirancang khusus untuk membantu
                 pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) dalam
                 mengembangkan strategi bisnis yang lebih efisien, tepat sasaran,
@@ -133,7 +247,7 @@ export default function BusinessConsultingChat() {
                     <Badge
                       key={index}
                       variant="secondary"
-                      className="bg-white/10 hover:bg-white/20 text-white border-white/20 cursor-pointer transition-all duration-300 hover:scale-105 px-4 py-2"
+                      className="bg-white/10 hover:bg-white/20 text-white border-white/20 cursor-pointer transition-all duration-300 hover:scale-105 px-4 py-2 backdrop-blur-sm"
                       onClick={() => handleSuggestedQuestion(question)}
                     >
                       {question}
@@ -146,14 +260,20 @@ export default function BusinessConsultingChat() {
         </div>
 
         {/* Chat Messages */}
-        {messages.length > 0 && <ChatMessages />}
+        {messages.length > 0 && (
+          <div className="backdrop-blur-sm bg-black/20 rounded-lg">
+            <ChatMessages />
+          </div>
+        )}
 
         {/* Input Form */}
-        <ChatInput />
+        <div className="backdrop-blur-sm bg-black/20 rounded-lg p-2">
+          <ChatInput />
+        </div>
 
         {/* Footer */}
-        <div className="text-center mt-6">
-          <p className="text-slate-500 text-xs">copyrigt | Biznify 2025</p>
+        <div className="text-center mt-20">
+          <p className="text-slate-500 text-xs">Copyright | Biznify 2025</p>
         </div>
       </div>
     </div>
