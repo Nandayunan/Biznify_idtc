@@ -1,12 +1,16 @@
 "use client";
 
 /* eslint-disable @typescript-eslint/no-namespace */
+import React from "react"
 
-import React, { useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-
+import { useChat } from "ai/react"
+import { useState, useRef, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { User } from "lucide-react";
 import {
@@ -207,7 +211,7 @@ const SplineViewer: React.FC<SplineViewerProps> = ({ url, className = "" }) => {
 };
 
 export default function BusinessConsultingChat() {
-  const { messages, handleSubmit, setMessages } = useChatContext();
+  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChatContext();
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
   const [showConclusionButton, setShowConclusionButton] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -230,132 +234,138 @@ export default function BusinessConsultingChat() {
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
+    scrollToBottom()
+  }, [messages])
 
   useEffect(() => {
-    // Check if user has seen subscription modal
-    const hasSeenModal = localStorage.getItem("hasSeenSubscriptionModal")
+    // Load saved subscription plan
     const savedPlan = localStorage.getItem("subscriptionPlan") as "free" | "premium" | null
-
-    if (!hasSeenModal) {
-      setShowSubscriptionModal(true)
-    }
-
     if (savedPlan) {
       setSubscriptionPlan(savedPlan)
     }
-  }, []);
 
-  useEffect(() => {
     // Load chat history and prompt history from localStorage
-    const savedHistory = localStorage.getItem("chatHistory");
+    const savedHistory = localStorage.getItem("chatHistory")
     if (savedHistory) {
-      const parsed = JSON.parse(savedHistory);
+      const parsed = JSON.parse(savedHistory)
       setChatHistory(
-        parsed.map((session: ChatSession) => ({
+        parsed.map((session: any) => ({
           ...session,
           timestamp: new Date(session.timestamp),
-        }))
-      );
+        })),
+      )
     }
 
-    const savedPrompts = localStorage.getItem("promptHistory");
+    const savedPrompts = localStorage.getItem("promptHistory")
     if (savedPrompts) {
-      const parsed = JSON.parse(savedPrompts);
+      const parsed = JSON.parse(savedPrompts)
       setPromptHistory(
-        parsed.map((prompt: UserPrompt) => ({
+        parsed.map((prompt: any) => ({
           ...prompt,
           timestamp: new Date(prompt.timestamp),
-        }))
-      );
+        })),
+      )
     }
 
     // Generate session ID if not exists
     if (!currentSessionId) {
-      setCurrentSessionId(Date.now().toString());
+      setCurrentSessionId(Date.now().toString())
     }
-  }, [currentSessionId]);
-
-  useEffect(() => {
-    // Show conclusion button after 3+ meaningful exchanges
-    const meaningfulMessages = messages.filter((m) => m.content.length > 50);
-    if (meaningfulMessages.length >= 4) {
-      setShowConclusionButton(true);
-    }
-  }, [messages]);
+  }, [currentSessionId])
 
   useEffect(() => {
     // Count user messages for free plan limit
     const userMessages = messages.filter((m) => m.role === "user")
     setMessageCount(userMessages.length)
 
+    // Show subscription modal after 5th message for free users
+    if (subscriptionPlan === "free" && userMessages.length === 5) {
+      setShowSubscriptionModal(true)
+    }
+
     // Show conclusion button after 3+ meaningful exchanges
     const meaningfulMessages = messages.filter((m) => m.content.length > 50)
     if (meaningfulMessages.length >= 4) {
       setShowConclusionButton(true)
     }
-  }, [messages])
+  }, [messages, subscriptionPlan])
 
   useEffect(() => {
     // Save current session to history when messages change
     if (messages.length > 0 && currentSessionId) {
-      const sessionTitle =
-        messages[0]?.content.substring(0, 50) + "..." || "New Chat";
+      const sessionTitle = messages[0]?.content.substring(0, 50) + "..." || "New Chat"
       const currentSession: ChatSession = {
         id: currentSessionId,
         title: sessionTitle,
         timestamp: new Date(),
         messages: messages,
-      };
+      }
 
       setChatHistory((prev) => {
-        const filtered = prev.filter(
-          (session) => session.id !== currentSessionId
-        );
-        const updated = [currentSession, ...filtered].slice(0, 20); // Keep last 20 sessions
-        localStorage.setItem("chatHistory", JSON.stringify(updated));
-        return updated;
-      });
+        const filtered = prev.filter((session) => session.id !== currentSessionId)
+        const updated = [currentSession, ...filtered].slice(0, 20) // Keep last 20 sessions
+        localStorage.setItem("chatHistory", JSON.stringify(updated))
+        return updated
+      })
 
       // Extract and save user prompts
-      const userMessages = messages.filter((m) => m.role === "user");
+      const userMessages = messages.filter((m) => m.role === "user")
       const newPrompts: UserPrompt[] = userMessages.map((msg) => ({
         id: msg.id,
         content: msg.content,
         timestamp: new Date(),
         sessionId: currentSessionId,
-      }));
+      }))
 
       setPromptHistory((prev) => {
         // Remove existing prompts from current session and add new ones
-        const filtered = prev.filter(
-          (prompt) => prompt.sessionId !== currentSessionId
-        );
-        const updated = [...newPrompts, ...filtered].slice(0, 50); // Keep last 50 prompts
-        localStorage.setItem("promptHistory", JSON.stringify(updated));
-        return updated;
-      });
+        const filtered = prev.filter((prompt) => prompt.sessionId !== currentSessionId)
+        const updated = [...newPrompts, ...filtered].slice(0, 50) // Keep last 50 prompts
+        localStorage.setItem("promptHistory", JSON.stringify(updated))
+        return updated
+      })
     }
-  }, [messages, currentSessionId]);
+  }, [messages, currentSessionId])
 
   const handleSuggestedQuestion = (question: string) => {
-    handleSubmit(new Event("submit"), { data: { message: question } });
-  };
+    // Allow up to 5 questions for free users
+    if (subscriptionPlan === "free" && messageCount >= 5) {
+      setShowSubscriptionModal(true)
+      return
+    }
+    handleSubmit(new Event("submit") as any, { data: { message: question } })
+  }
 
   const handleAreaClick = (area: string) => {
-    setSelectedArea(area);
-    const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`;
-    handleSubmit(new Event("submit"), { data: { message: areaPrompt } });
-  };
+    // Allow up to 5 questions for free users
+    if (subscriptionPlan === "free" && messageCount >= 5) {
+      setShowSubscriptionModal(true)
+      return
+    }
+    setSelectedArea(area)
+    const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`
+    handleSubmit(new Event("submit") as any, { data: { message: areaPrompt } })
+  }
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    // Check free plan limit - prevent submission after 5 messages
+    if (subscriptionPlan === "free" && messageCount >= 5) {
+      e.preventDefault()
+      setShowSubscriptionModal(true)
+      return
+    }
+    handleSubmit(e)
+  }
 
   const handleCreateConclusion = () => {
-    sessionStorage.setItem("chatMessages", JSON.stringify(messages));
-    router.push("/conclusion");
-  };
-
-  void handleCreateConclusion;
+    // Premium feature check
+    if (subscriptionPlan === "free") {
+      setShowSubscriptionModal(true)
+      return
+    }
+    sessionStorage.setItem("chatMessages", JSON.stringify(messages))
+    router.push("/conclusion")
+  }
 
   const handleSubscriptionChoice = (plan: "free" | "premium") => {
     setSubscriptionPlan(plan)
@@ -365,49 +375,51 @@ export default function BusinessConsultingChat() {
   }
 
   const loadChatSession = (session: ChatSession) => {
-    setMessages(session.messages);
-    setCurrentSessionId(session.id);
-    setSidebarOpen(false);
-  };
-
-  void loadChatSession;
+    setMessages(session.messages)
+    setCurrentSessionId(session.id)
+    setSidebarOpen(false)
+  }
 
   const startNewChat = () => {
-    setMessages([]);
-    setCurrentSessionId(Date.now().toString());
-    setShowConclusionButton(false);
-    setSidebarOpen(false);
-  };
+    setMessages([])
+    setCurrentSessionId(Date.now().toString())
+    setShowConclusionButton(false)
+    setSidebarOpen(false)
+    setMessageCount(0)
+  }
 
   const deletePrompt = (promptId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation()
     setPromptHistory((prev) => {
-      const updated = prev.filter((prompt) => prompt.id !== promptId);
-      localStorage.setItem("promptHistory", JSON.stringify(updated));
-      return updated;
-    });
-  };
+      const updated = prev.filter((prompt) => prompt.id !== promptId)
+      localStorage.setItem("promptHistory", JSON.stringify(updated))
+      return updated
+    })
+  }
 
   const reusePrompt = (prompt: UserPrompt) => {
-    handleSubmit(new Event("submit"), { data: { message: prompt.content } });
-    setSidebarOpen(false);
-  };
+    // Allow up to 5 questions for free users
+    if (subscriptionPlan === "free" && messageCount >= 5) {
+      setShowSubscriptionModal(true)
+      return
+    }
+    handleSubmit(new Event("submit") as any, { data: { message: prompt.content } })
+    setSidebarOpen(false)
+  }
 
   const formatTimestamp = (date: Date) => {
-    const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    const now = new Date()
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
 
-    if (diffInHours < 1) return "Just now";
-    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`;
-    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
-    return date.toLocaleDateString();
-  };
+    if (diffInHours < 1) return "Just now"
+    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`
+    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`
+    return date.toLocaleDateString()
+  }
 
   const truncateText = (text: string, maxLength: number) => {
-    return text.length > maxLength
-      ? text.substring(0, maxLength) + "..."
-      : text;
-  };
+    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
