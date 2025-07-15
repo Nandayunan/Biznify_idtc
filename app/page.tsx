@@ -467,44 +467,50 @@ export default function BusinessConsultingChat() {
         />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
+      <div className="relative w-full px-0 pt-20 pb-8 min-h-screen">
         {/* Header */}
-        <div className="relative text-center mb-8">
-          <div className="flex items-center justify-center gap-6 mb-4">
-            {/* Sidebar Prompt Button - left of title */}
-            <Button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              variant="ghost"
-              className="text-white hover:bg-white/10 rounded-xl"
-            >
-              <Menu className="w-5 h-5 mr-2" />
-              <span className="hidden sm:inline">Prompts</span>
-            </Button>
-            {/* Logo and Title - centered */}
-            <div className="inline-flex items-center gap-3">
-              <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-6 transition-transform duration-300">
-                  <Bot className="w-6 h-6 text-white" />
+        <div className="fixed top-0 left-0 right-0 w-full z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10">
+          <header
+            className="w-full px-2 sm:px-4 py-3 flex items-center justify-between gap-2"
+          >
+            {/* Sidebar Prompt Button - paling ujung kiri */}
+            <div className="flex-shrink-0 flex items-center justify-start w-auto">
+              <Button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                variant="ghost"
+                className="text-white hover:bg-white/10 rounded-xl p-2 ml-0"
+                style={{ marginLeft: 0 }}
+              >
+                <Menu className="w-5 h-5 mr-2" />
+                <span className="hidden sm:inline">Prompts</span>
+              </Button>
+            </div>
+            {/* Logo and Title - tengah, responsive */}
+            <div className="flex-1 flex items-center justify-center min-w-0">
+              <div className="inline-flex items-center gap-2 min-w-0">
+                <div className="relative flex-shrink-0">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-6 transition-transform duration-300">
+                    <Bot className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full animate-ping"></div>
                 </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full animate-ping"></div>
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-cyan-200 bg-clip-text text-transparent text-center">
-                  Biznify AI
-                </h1>
-                <p className="text-slate-400 text-sm text-center">
-                  asisten digital bisnis Anda
-                </p>
+                <div className="min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-cyan-200 bg-clip-text text-transparent text-center truncate">
+                    Biznify AI
+                  </h1>
+                  <p className="text-slate-400 text-xs sm:text-sm text-center truncate">
+                    asisten digital bisnis Anda
+                  </p>
+                </div>
               </div>
             </div>
-            {/* Plan Badge & Upgrade Button - right of title */}
-            <div className="flex items-center gap-3">
+            {/* Plan Badge & Upgrade Button - paling kanan */}
+            <div className="flex items-center gap-2 flex-shrink-0 justify-end w-auto">
               <Badge
-                className={`${
-                  subscriptionPlan === "premium"
-                    ? "bg-gradient-to-r from-purple-500 to-pink-500"
-                    : "bg-slate-600"
-                } text-white border-0 px-3 py-1`}
+                className={`${subscriptionPlan === "premium"
+                  ? "bg-gradient-to-r from-purple-500 to-pink-500"
+                  : "bg-slate-600"
+                  } text-white border-0 px-3 py-1`}
               >
                 {subscriptionPlan === "premium" ? (
                   <>
@@ -527,13 +533,13 @@ export default function BusinessConsultingChat() {
                 </Button>
               )}
             </div>
-          </div>
+          </header>
         </div>
 
         {/* Subscription Modal */}
         {showSubscriptionModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl max-w-4xl w-full relative">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+            <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl max-w-md sm:max-w-2xl md:max-w-4xl w-full relative overflow-y-auto max-h-[90vh]">
               {/* Close Button */}
               <button
                 onClick={() => setShowSubscriptionModal(false)}
@@ -542,7 +548,7 @@ export default function BusinessConsultingChat() {
               >
                 <X className="w-5 h-5" />
               </button>
-              <CardHeader className="text-center pb-6">
+              <CardHeader className="text-center pb-4 sm:pb-6">
                 <div className="flex justify-center mb-4">
                   <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
                     <Crown className="w-8 h-8 text-white" />
@@ -555,11 +561,11 @@ export default function BusinessConsultingChat() {
                   Get expert business consulting advice tailored to your needs
                 </p>
               </CardHeader>
-              <CardContent className="p-8">
-                <div className="grid md:grid-cols-2 gap-6">
+              <CardContent className="p-4 sm:p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   {/* Free Plan */}
                   <Card className="bg-white/5 border-white/20 hover:bg-white/10 transition-all duration-300 relative">
-                    <CardContent className="p-6">
+                    <CardContent className="p-4 sm:p-6">
                       <div className="text-center mb-6">
                         <div className="w-12 h-12 bg-gradient-to-r from-slate-500 to-slate-600 rounded-xl flex items-center justify-center mx-auto mb-4">
                           <Zap className="w-6 h-6 text-white" />
@@ -617,7 +623,7 @@ export default function BusinessConsultingChat() {
                         Most Popular
                       </Badge>
                     </div>
-                    <CardContent className="p-6">
+                    <CardContent className="p-4 sm:p-6">
                       <div className="text-center mb-6">
                         <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                           <Crown className="w-6 h-6 text-white" />
@@ -674,7 +680,7 @@ export default function BusinessConsultingChat() {
                   </Card>
                 </div>
 
-                <div className="text-center mt-8">
+                <div className="text-center mt-4 sm:mt-8">
                   <p className="text-slate-400 text-sm">
                     You can upgrade or change your plan anytime in settings
                   </p>
@@ -685,9 +691,7 @@ export default function BusinessConsultingChat() {
         )}
         {/* Sidebar - Prompt History */}
         <div
-          className={`fixed inset-y-0 left-0 z-50 w-80 bg-black/20 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className={`fixed inset-y-0 left-0 z-50 w-64 sm:w-80 bg-black/80 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         >
           <div className="flex flex-col h-full">
             {/* Sidebar Header */}
@@ -774,27 +778,19 @@ export default function BusinessConsultingChat() {
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            style={{ top: '56px' }} // header height
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Main Content - Adjusts based on sidebar state */}
         <div
-          className={`flex-1 relative z-10 transition-all duration-300 ${
-            sidebarOpen ? "lg:ml-80" : "ml-0"
-          }`}
+          className={`flex-1 relative z-10 transition-all duration-300 ${sidebarOpen ? "lg:ml-80" : "ml-0"} pt-2`}
         >
-          <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="w-full px-0 py-8">
             {/* Header */}
             <div className="text-center mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center w-full">
-                  <div className="flex-1 flex justify-center">
-                    <div className="inline-flex items-center gap-3"></div>
-                  </div>
-                  <div className="w-20"></div> {/* Spacer for balance */}
-                </div>
-              </div>
+              {/* ...existing code... */}
 
               {messages.length === 0 && (
                 <>
@@ -806,25 +802,27 @@ export default function BusinessConsultingChat() {
                   </p>
 
                   {/* Business Areas */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    {businessAreas.map((area) => (
-                      <Card
-                        key={area.label}
-                        className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:shadow-xl group"
-                        onClick={() => handleAreaClick(area.label)}
-                      >
-                        <CardContent className="p-4 text-center">
-                          <div
-                            className={`w-12 h-12 bg-gradient-to-r ${area.color} rounded-lg flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:shadow-xl transition-shadow duration-300`}
-                          >
-                            <area.icon className="w-6 h-6 text-white" />
-                          </div>
-                          <p className="text-white text-sm font-medium">
-                            {area.label}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
+                  <div className="mx-auto w-full max-w-6xl px-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                      {businessAreas.map((area) => (
+                        <Card
+                          key={area.label}
+                          className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:shadow-xl group"
+                          onClick={() => handleAreaClick(area.label)}
+                        >
+                          <CardContent className="p-4 text-center">
+                            <div
+                              className={`w-12 h-12 bg-gradient-to-r ${area.color} rounded-lg flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:shadow-xl transition-shadow duration-300`}
+                            >
+                              <area.icon className="w-6 h-6 text-white" />
+                            </div>
+                            <p className="text-white text-sm font-medium">
+                              {area.label}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Suggested Questions */}
@@ -858,7 +856,7 @@ export default function BusinessConsultingChat() {
             )}
 
             {/* Input Form */}
-            <div className="backdrop-blur-sm bg-black/20 rounded-lg p-2">
+            <div className="backdrop-blur-sm bg-black/20 rounded-lg p-2 mx-auto w-full max-w-6xl px-2">
               <ChatInput />
             </div>
 
