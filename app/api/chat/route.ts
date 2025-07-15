@@ -59,11 +59,20 @@ export async function POST(req: Request) {
         },
       }),
       generateConclusion: tool({
-        description: "Membuat kesimpulan dari pertanyaan yang ditanyakan",
+        description:
+          "Membuat kesimpulan dari pertanyaan yang ditanyakan dengan format markdown",
         parameters: z.object({
-          conclusion: z
-            .string()
-            .describe("Kesimpulan dari pertanyaan yang ditanyakan"),
+          conclusions: z
+            .array(
+              z.object({
+                title: z.string().describe("Judul dari kesimpulan"),
+                content: z.string().describe("Isi dari kesimpulan"),
+                badge: z.string().describe("Kategori dari kesimpulan"),
+              })
+            )
+            .describe(
+              "Kesimpulan dari pertanyaan yang ditanyakan dengan format markdown"
+            ),
         }),
       }),
     },

@@ -9,63 +9,77 @@ import {
   AIMessage,
   AIMessageContent,
 } from "@/components/ui/kibo-ui/ai/message";
-import { useEffect, useState } from "react";
-
-const messages = [
-  "Hello, how are you?",
-  "I am good, thank you!",
-  "What is your name?",
-  "My name is John Doe.",
-  "Nice to meet you, John!",
-  "Likewise! How can I help you today?",
-  "I have some questions about programming.",
-  "I'd be happy to help with that! What would you like to know?",
-  "What's the best way to learn JavaScript?",
-  "I recommend starting with the basics and building small projects.",
-  "That makes sense. Any specific resources you'd recommend?",
-  "MDN Web Docs and freeCodeCamp are great places to start.",
-  "Thanks for the suggestions! What about frameworks?",
-  "React is a popular choice for beginners.",
-  "I've heard of React. What makes it special?",
-  "It has a large community and great documentation.",
-  "That sounds promising. How long does it take to learn?",
-  "It depends on your background, but a few months is typical.",
-  "I have some Python experience. Will that help?",
-  "Yes, that's a great foundation! Many concepts transfer over.",
-  "That's encouraging. What should I build first?",
-  "Start with a simple todo app or weather widget.",
-  "Those sound like good practice projects.",
-  "They help you learn the fundamentals while building something useful.",
-  "I'll give it a try. Any other tips?",
-  "Practice regularly and don't be afraid to make mistakes.",
-  "That's good advice. Thanks for your help!",
-  "You're welcome! Feel free to ask if you have more questions.",
-  "I will. Have a great day!",
-  "You too! Good luck with your learning journey!",
-];
+import { useChatContext } from "../chat-context";
+import React from "react";
+import { Button } from "@/components/ui/button";
 
 export default function ChatConversation() {
-  const [visibleMessages, setVisibleMessages] = useState<string[]>([]);
-
-  useEffect(() => {
-    let currentIndex = 0;
-    const interval = setInterval(() => {
-      if (currentIndex < messages.length) {
-        setVisibleMessages((prev) => [...prev, messages[currentIndex]]);
-        currentIndex++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 500);
-    return () => clearInterval(interval);
-  }, []);
+  const { messages, append, status } = useChatContext();
 
   return (
     <AIConversation className="relative size-full rounded-lg border">
       <AIConversationContent>
-        {visibleMessages.map((message, index) => (
-          <AIMessage from={index % 2 === 0 ? "user" : "assistant"} key={index}>
-            <AIMessageContent>{message}</AIMessageContent>
+        {messages.map((message) => (
+          <AIMessage
+            from={message.role === "user" ? "user" : "assistant"}
+            key={message.id}
+          >
+            <AIMessageContent>
+              {status === "submitted" && <>Loading...</>}
+              {message.parts.map((part, index) => {
+                if (part.type === "step-start") {
+                  return null;
+                }
+
+                if (part.type === "text") {
+                  return (
+                    <React.Fragment key={`${message.id}-${index}`}>
+                      {part.text}
+                    </React.Fragment>
+                  );
+                }
+
+                if (part.type === "tool-invocation") {
+                  if (
+                    part.toolInvocation.toolName === "generateQuestion" &&
+                    part.toolInvocation.state === "result"
+                  ) {
+                    return (
+                      <div key={`${message.id}-${index}`}>
+                        <p className="text-sm font-medium">
+                          {part.toolInvocation.args.question}
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          {part.toolInvocation.args.options.map(
+                            (option: string) => (
+                              <Button
+                                key={`${message.id}-${index}-${option}`}
+                                className="w-full flex-wrap p-2"
+                                variant="outline"
+                                onClick={() => {
+                                  append({
+                                    role: "user",
+                                    content: option,
+                                  });
+                                }}
+                              >
+                                {option}
+                              </Button>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+                }
+
+                return (
+                  <React.Fragment key={`${message.id}-${index}`}>
+                    {JSON.stringify(part, null, 2)}
+                  </React.Fragment>
+                );
+              })}
+            </AIMessageContent>
           </AIMessage>
         ))}
       </AIConversationContent>
