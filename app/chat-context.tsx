@@ -1,10 +1,12 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useRouter } from "next/navigation";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useState } from "react";
 
-const ChatContext = createContext<ReturnType<typeof useChat> | null>(null);
+const ChatContext = createContext<
+  | (ReturnType<typeof useChat> & { conclusion: { conclusion: string } | null })
+  | null
+>(null);
 
 export const useChatContext = () => {
   const context = useContext(ChatContext);
@@ -17,15 +19,21 @@ export const useChatContext = () => {
 };
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
-  const router = useRouter();
+  const [conclusion, setConclusion] = useState<{
+    conclusion: string;
+  } | null>(null);
   const chat = useChat({
     id: "APP_MAIN_CHAT_AI",
     onToolCall: ({ toolCall }) => {
       if (toolCall.toolName === "generateConclusion") {
-        router.push("/conclusion");
+        setConclusion(toolCall.args as { conclusion: string });
       }
     },
   });
 
-  return <ChatContext.Provider value={chat}>{children}</ChatContext.Provider>;
+  return (
+    <ChatContext.Provider value={{ ...chat, conclusion }}>
+      {children}
+    </ChatContext.Provider>
+  );
 };
