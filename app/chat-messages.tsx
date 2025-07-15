@@ -9,12 +9,12 @@ import { Button } from "@/components/ui/button";
 import Conclusion from "@/components/conclusion";
 
 export default function ChatMessages() {
-  const { messages, status, append, conclusion } = useChatContext();
+  const { messages, status, append, conclusions } = useChatContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   return (
     <>
-      {conclusion && <Conclusion />}
+      {conclusions && conclusions.length > 0 ? <Conclusion /> : null}
       <Card className="bg-white/5 backdrop-blur-sm border-white/10 mb-6 shadow-2xl">
         <CardContent className="p-0">
           <div className="h-[60vh] overflow-y-auto p-6 space-y-6">

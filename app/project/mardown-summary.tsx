@@ -3,7 +3,6 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
 import { ChevronDown, ChevronRight, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,7 +62,7 @@ export default function MarkdownSummary({
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
-                code({ node, className, children, ...props }) {
+                code({ className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || "");
                   const codeString = String(children).replace(/\n$/, "");
 
