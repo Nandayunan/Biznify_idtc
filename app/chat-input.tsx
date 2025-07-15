@@ -1,18 +1,43 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { trpc } from "@/lib/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
-import { useChatContext } from "./chat-context";
 
 export default function ChatInput() {
-  const { input, handleInputChange, handleSubmit, status } = useChatContext();
+  const [input, setInput] = useState("");
+  const [status, setStatus] = useState<"idle" | "streaming">("idle");
+  const router = useRouter();
+  const createProject = trpc.project.create.useMutation();
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    setStatus("streaming");
+    try {
+      const project = await createProject.mutateAsync({ title: input });
+      setInput("");
+      router.push(`/project/${project.id}`);
+    } catch (err) {
+      // Optionally handle error
+      alert("Failed to create project");
+    } finally {
+      setStatus("idle");
+    }
+  };
 
   return (
     <Card className="bg-white/5 backdrop-blur-sm border-white/10 shadow-2xl">
       <CardContent className="p-4">
-        <form onSubmit={handleSubmit} className="flex gap-3">
+        <form className="flex gap-3" onSubmit={handleSubmit}>
           <Input
             value={input}
             onChange={handleInputChange}

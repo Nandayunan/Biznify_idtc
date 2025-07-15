@@ -9,7 +9,7 @@ import {
   AIInputTools,
 } from "@/components/ui/kibo-ui/ai/input";
 import { PlusIcon } from "lucide-react";
-import { useChatContext } from "../chat-context";
+import { useChatContext } from "@/app/chat-context";
 
 export default function ChatInput() {
   const { input, handleInputChange, handleSubmit, status } = useChatContext();

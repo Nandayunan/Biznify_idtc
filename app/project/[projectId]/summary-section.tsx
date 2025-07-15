@@ -1,6 +1,6 @@
 "use client";
 
-import { useChatContext } from "../chat-context";
+import { useChatContext } from "@/app/chat-context";
 import MarkdownSummary from "./mardown-summary";
 
 export default function SummarySection() {
