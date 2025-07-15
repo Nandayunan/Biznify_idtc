@@ -14,17 +14,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client"; //import the auth client
 import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     authClient.signIn.email(
       {
         /**
@@ -43,10 +46,36 @@ export default function LoginPage() {
       },
       {
         onSuccess: () => {
-          router.push("/");
+          setIsLoading(false);
+          
+          // Show success alert with timer
+          Swal.fire({
+            title: "Login Berhasil!",
+            text: "Selamat datang kembali",
+            icon: "success",
+            showConfirmButton: false,
+            customClass: {
+              popup: "border border-purple-500/20"
+            }
+          });
+          setTimeout(() => {
+            Swal.close();
+            router.push("/");
+          }, 2000);
         },
         onError: (ctx) => {
-          alert(ctx.error.message);
+          setIsLoading(false);
+          
+          // Show error alert
+          Swal.fire({
+            title: "Login Gagal!",
+            text: ctx.error.message,
+            icon: "error",
+            confirmButtonText: "Coba Lagi",
+            customClass: {
+              popup: "border border-red-500/20"
+            }
+          });
         },
       }
     );
@@ -103,6 +132,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-purple-300 focus:border-purple-400 focus:ring-purple-400"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -121,6 +151,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-purple-300 focus:border-purple-400 focus:ring-purple-400"
                     required
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
@@ -144,9 +175,17 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
+                disabled={isLoading}
                 className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 text-white font-semibold py-3 rounded-lg transition-all duration-200 transform hover:scale-105"
               >
-                Masuk
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Masuk...
+                  </div>
+                ) : (
+                  "Masuk"
+                )}
               </Button>
 
               <div className="text-center">
