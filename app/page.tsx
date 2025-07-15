@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 import React from "react";
-
+import Spline from '@splinetool/react-spline/next';
 // import { useChat } from "ai/react"
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 // import { ScrollArea } from "@/components/ui/scroll-area"
 // import { ScrollArea } from "@/components/ui/scroll-area";
+import { authClient } from "@/lib/auth-client";
 import { User } from "lucide-react";
+import { LogOut } from 'lucide-react';
 import {
   // Send,
   Bot,
@@ -34,7 +36,8 @@ import {
 import ChatInput from "./chat-input";
 import ChatMessages from "./chat-messages";
 import { useChatContext } from "./chat-context";
-
+import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
 // Declare custom elements for TypeScript
 declare global {
   namespace JSX {
@@ -373,6 +376,30 @@ export default function BusinessConsultingChat() {
     const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`;
     handleSubmit({} as MockEvent, { data: { message: areaPrompt } });
   };
+  const router = useRouter();
+  const handleLogout = async () => {
+    await authClient.signOut({
+    fetchOptions: {
+      onSuccess: () => {
+                
+                // Show success alert with timer
+                Swal.fire({
+                  title: "Logout Berhasil!",
+                  text: "Sampai Jumpa Kembali",
+                  icon: "success",
+                  showConfirmButton: false,
+                  customClass: {
+                    popup: "border border-purple-500/20"
+                  }
+                });
+                setTimeout(() => {
+                  Swal.close();
+                  router.push("/login");
+                }, 2000);
+              },
+    },
+  });
+  };
 
   // const handleFormSubmit = (e: React.FormEvent) => {
   //   // Check free plan limit - prevent submission after 5 messages
@@ -481,8 +508,8 @@ export default function BusinessConsultingChat() {
                 className="text-white hover:bg-white/10 rounded-xl p-2 ml-0"
                 style={{ marginLeft: 0 }}
               >
-                <Menu className="w-5 h-5 mr-2" />
-                <span className="hidden sm:inline">Prompts</span>
+                <User className="w-5 h-5 mr-2" />
+                <span className="hidden sm:inline">Profile</span>
               </Button>
             </div>
             {/* Logo and Title - tengah, responsive */}
@@ -770,6 +797,30 @@ export default function BusinessConsultingChat() {
                   ))
                 )}
               </div>
+            </div>
+
+            {/* Profile Section */}
+            <div className="p-4 border-t border-white/10">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">
+                    {"User Name"}
+                  </p>
+                  <p className="text-slate-400 text-xs truncate">
+                    {"user@example.com"}
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={handleLogout}
+                className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/30 rounded-xl transition-all duration-300"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </div>
         </div>
