@@ -449,12 +449,12 @@ export default function BusinessConsultingChat() {
       </div>
 
       {/* 3D Spline Background - Digeser ke kanan */}
-      <div className="absolute inset-0 z-0">
+      {/* <div className="absolute inset-0 z-0">
         <SplineViewer
           url="https://prod.spline.design/y0EnxvXrPRsZpMhP/scene.splinecode"
           className="w-full h-full opacity-30"
         />
-      </div>
+      </div> */}
 
 
       <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
