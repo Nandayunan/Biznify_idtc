@@ -3,9 +3,14 @@
 import { useChat } from "@ai-sdk/react";
 import { createContext, useContext, useState } from "react";
 
+type Conclusion = {
+  title: string;
+  content: string;
+  badge: string;
+};
+
 const ChatContext = createContext<
-  | (ReturnType<typeof useChat> & { conclusion: { conclusion: string } | null })
-  | null
+  (ReturnType<typeof useChat> & { conclusions: Conclusion[] | null }) | null
 >(null);
 
 export const useChatContext = () => {
@@ -19,20 +24,20 @@ export const useChatContext = () => {
 };
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
-  const [conclusion, setConclusion] = useState<{
-    conclusion: string;
-  } | null>(null);
+  const [conclusions, setConclusions] = useState<Conclusion[] | null>(null);
   const chat = useChat({
     id: "APP_MAIN_CHAT_AI",
     onToolCall: ({ toolCall }) => {
       if (toolCall.toolName === "generateConclusion") {
-        setConclusion(toolCall.args as { conclusion: string });
+        setConclusions(
+          (toolCall.args as { conclusions: Conclusion[] }).conclusions || []
+        );
       }
     },
   });
 
   return (
-    <ChatContext.Provider value={{ ...chat, conclusion }}>
+    <ChatContext.Provider value={{ ...chat, conclusions }}>
       {children}
     </ChatContext.Provider>
   );

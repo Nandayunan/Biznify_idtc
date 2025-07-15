@@ -1,15 +1,15 @@
 "use client";
 
 /* eslint-disable @typescript-eslint/no-namespace */
-import React from "react"
+import React from "react";
 
 // import { useChat } from "ai/react"
-import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 // import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 // import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge";
 // import { ScrollArea } from "@/components/ui/scroll-area"
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { User } from "lucide-react";
@@ -230,18 +230,19 @@ const SplineViewer: React.FC<SplineViewerProps> = ({ url, className = "" }) => {
 
 export default function BusinessConsultingChat() {
   const { messages, handleSubmit, setMessages } = useChatContext();
-  const [selectedArea, setSelectedArea] = useState<string | null>(null)
-  const [showConclusionButton, setShowConclusionButton] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [chatHistory, setChatHistory] = useState<ChatSession[]>([])
-  const [promptHistory, setPromptHistory] = useState<UserPrompt[]>([])
-  const [currentSessionId, setCurrentSessionId] = useState<string>("")
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
-  const [subscriptionPlan, setSubscriptionPlan] = useState<"free" | "premium">("free")
-  const [messageCount, setMessageCount] = useState(0)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [selectedArea, setSelectedArea] = useState<string | null>(null);
+  const [showConclusionButton, setShowConclusionButton] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [chatHistory, setChatHistory] = useState<ChatSession[]>([]);
+  const [promptHistory, setPromptHistory] = useState<UserPrompt[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string>("");
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<"free" | "premium">(
+    "free"
+  );
+  const [messageCount, setMessageCount] = useState(0);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   // const router = useRouter()
-
 
   void chatHistory;
   void selectedArea;
@@ -252,118 +253,126 @@ export default function BusinessConsultingChat() {
   };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     // Load saved subscription plan
-    const savedPlan = localStorage.getItem("subscriptionPlan") as "free" | "premium" | null
+    const savedPlan = localStorage.getItem("subscriptionPlan") as
+      | "free"
+      | "premium"
+      | null;
     if (savedPlan) {
-      setSubscriptionPlan(savedPlan)
+      setSubscriptionPlan(savedPlan);
     }
 
     // Load chat history and prompt history from localStorage
-    const savedHistory = localStorage.getItem("chatHistory")
+    const savedHistory = localStorage.getItem("chatHistory");
     if (savedHistory) {
-      const parsed: SavedChatSession[] = JSON.parse(savedHistory)
+      const parsed: SavedChatSession[] = JSON.parse(savedHistory);
       setChatHistory(
         parsed.map((session) => ({
           ...session,
           timestamp: new Date(session.timestamp),
-        })),
-      )
+        }))
+      );
     }
 
-    const savedPrompts = localStorage.getItem("promptHistory")
+    const savedPrompts = localStorage.getItem("promptHistory");
     if (savedPrompts) {
-      const parsed: SavedUserPrompt[] = JSON.parse(savedPrompts)
+      const parsed: SavedUserPrompt[] = JSON.parse(savedPrompts);
       setPromptHistory(
         parsed.map((prompt) => ({
           ...prompt,
           timestamp: new Date(prompt.timestamp),
-        })),
-      )
+        }))
+      );
     }
 
     // Generate session ID if not exists
     if (!currentSessionId) {
-      setCurrentSessionId(Date.now().toString())
+      setCurrentSessionId(Date.now().toString());
     }
-  }, [currentSessionId])
+  }, [currentSessionId]);
 
   useEffect(() => {
     // Count user messages for free plan limit
-    const userMessages = messages.filter((m) => m.role === "user")
-    setMessageCount(userMessages.length)
+    const userMessages = messages.filter((m) => m.role === "user");
+    setMessageCount(userMessages.length);
 
     // Show subscription modal after 5th message for free users
     if (subscriptionPlan === "free" && userMessages.length === 5) {
-      setShowSubscriptionModal(true)
+      setShowSubscriptionModal(true);
     }
 
     // Show conclusion button after 3+ meaningful exchanges
-    const meaningfulMessages = messages.filter((m) => m.content.length > 50)
+    const meaningfulMessages = messages.filter((m) => m.content.length > 50);
     if (meaningfulMessages.length >= 4) {
-      setShowConclusionButton(true)
+      setShowConclusionButton(true);
     }
-  }, [messages, subscriptionPlan])
+  }, [messages, subscriptionPlan]);
 
   useEffect(() => {
     // Save current session to history when messages change
     if (messages.length > 0 && currentSessionId) {
-      const sessionTitle = messages[0]?.content.substring(0, 50) + "..." || "New Chat"
+      const sessionTitle =
+        messages[0]?.content.substring(0, 50) + "..." || "New Chat";
       const currentSession: ChatSession = {
         id: currentSessionId,
         title: sessionTitle,
         timestamp: new Date(),
         messages: messages,
-      }
+      };
 
       setChatHistory((prev) => {
-        const filtered = prev.filter((session) => session.id !== currentSessionId)
-        const updated = [currentSession, ...filtered].slice(0, 20) // Keep last 20 sessions
-        localStorage.setItem("chatHistory", JSON.stringify(updated))
-        return updated
-      })
+        const filtered = prev.filter(
+          (session) => session.id !== currentSessionId
+        );
+        const updated = [currentSession, ...filtered].slice(0, 20); // Keep last 20 sessions
+        localStorage.setItem("chatHistory", JSON.stringify(updated));
+        return updated;
+      });
 
       // Extract and save user prompts
-      const userMessages = messages.filter((m) => m.role === "user")
+      const userMessages = messages.filter((m) => m.role === "user");
       const newPrompts: UserPrompt[] = userMessages.map((msg) => ({
         id: msg.id,
         content: msg.content,
         timestamp: new Date(),
         sessionId: currentSessionId,
-      }))
+      }));
 
       setPromptHistory((prev) => {
         // Remove existing prompts from current session and add new ones
-        const filtered = prev.filter((prompt) => prompt.sessionId !== currentSessionId)
-        const updated = [...newPrompts, ...filtered].slice(0, 50) // Keep last 50 prompts
-        localStorage.setItem("promptHistory", JSON.stringify(updated))
-        return updated
-      })
+        const filtered = prev.filter(
+          (prompt) => prompt.sessionId !== currentSessionId
+        );
+        const updated = [...newPrompts, ...filtered].slice(0, 50); // Keep last 50 prompts
+        localStorage.setItem("promptHistory", JSON.stringify(updated));
+        return updated;
+      });
     }
-  }, [messages, currentSessionId])
+  }, [messages, currentSessionId]);
 
   const handleSuggestedQuestion = (question: string) => {
     // Allow up to 5 questions for free users
     if (subscriptionPlan === "free" && messageCount >= 5) {
-      setShowSubscriptionModal(true)
-      return
+      setShowSubscriptionModal(true);
+      return;
     }
-    handleSubmit({} as MockEvent, { data: { message: question } })
-  }
+    handleSubmit({} as MockEvent, { data: { message: question } });
+  };
 
   const handleAreaClick = (area: string) => {
     // Allow up to 5 questions for free users
     if (subscriptionPlan === "free" && messageCount >= 5) {
-      setShowSubscriptionModal(true)
-      return
+      setShowSubscriptionModal(true);
+      return;
     }
-    setSelectedArea(area)
-    const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`
-    handleSubmit({} as MockEvent, { data: { message: areaPrompt } })
-  }
+    setSelectedArea(area);
+    const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`;
+    handleSubmit({} as MockEvent, { data: { message: areaPrompt } });
+  };
 
   // const handleFormSubmit = (e: React.FormEvent) => {
   //   // Check free plan limit - prevent submission after 5 messages
@@ -386,11 +395,11 @@ export default function BusinessConsultingChat() {
   // }
 
   const handleSubscriptionChoice = (plan: "free" | "premium") => {
-    setSubscriptionPlan(plan)
-    localStorage.setItem("subscriptionPlan", plan)
-    localStorage.setItem("hasSeenSubscriptionModal", "true")
-    setShowSubscriptionModal(false)
-  }
+    setSubscriptionPlan(plan);
+    localStorage.setItem("subscriptionPlan", plan);
+    localStorage.setItem("hasSeenSubscriptionModal", "true");
+    setShowSubscriptionModal(false);
+  };
 
   // const loadChatSession = (session: ChatSession) => {
   //   setMessages(session.messages)
@@ -399,45 +408,47 @@ export default function BusinessConsultingChat() {
   // }
 
   const startNewChat = () => {
-    setMessages([])
-    setCurrentSessionId(Date.now().toString())
-    setShowConclusionButton(false)
-    setSidebarOpen(false)
-    setMessageCount(0)
-  }
+    setMessages([]);
+    setCurrentSessionId(Date.now().toString());
+    setShowConclusionButton(false);
+    setSidebarOpen(false);
+    setMessageCount(0);
+  };
 
   const deletePrompt = (promptId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+    e.stopPropagation();
     setPromptHistory((prev) => {
-      const updated = prev.filter((prompt) => prompt.id !== promptId)
-      localStorage.setItem("promptHistory", JSON.stringify(updated))
-      return updated
-    })
-  }
+      const updated = prev.filter((prompt) => prompt.id !== promptId);
+      localStorage.setItem("promptHistory", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   const reusePrompt = (prompt: UserPrompt) => {
     // Allow up to 5 questions for free users
     if (subscriptionPlan === "free" && messageCount >= 5) {
-      setShowSubscriptionModal(true)
-      return
+      setShowSubscriptionModal(true);
+      return;
     }
-    handleSubmit({} as MockEvent, { data: { message: prompt.content } })
-    setSidebarOpen(false)
-  }
+    handleSubmit({} as MockEvent, { data: { message: prompt.content } });
+    setSidebarOpen(false);
+  };
 
   const formatTimestamp = (date: Date) => {
-    const now = new Date()
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
-    if (diffInHours < 1) return "Just now"
-    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`
-    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`
-    return date.toLocaleDateString()
-  }
+    if (diffInHours < 1) return "Just now";
+    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`;
+    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
+    return date.toLocaleDateString();
+  };
 
   const truncateText = (text: string, maxLength: number) => {
-    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text
-  }
+    return text.length > maxLength
+      ? text.substring(0, maxLength) + "..."
+      : text;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
@@ -455,7 +466,6 @@ export default function BusinessConsultingChat() {
           className="w-full h-full opacity-30"
         />
       </div>
-
 
       <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
@@ -490,8 +500,11 @@ export default function BusinessConsultingChat() {
             {/* Plan Badge & Upgrade Button - right of title */}
             <div className="flex items-center gap-3">
               <Badge
-                className={`${subscriptionPlan === "premium" ? "bg-gradient-to-r from-purple-500 to-pink-500" : "bg-slate-600"
-                  } text-white border-0 px-3 py-1`}
+                className={`${
+                  subscriptionPlan === "premium"
+                    ? "bg-gradient-to-r from-purple-500 to-pink-500"
+                    : "bg-slate-600"
+                } text-white border-0 px-3 py-1`}
               >
                 {subscriptionPlan === "premium" ? (
                   <>
@@ -517,8 +530,6 @@ export default function BusinessConsultingChat() {
           </div>
         </div>
 
-
-
         {/* Subscription Modal */}
         {showSubscriptionModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -537,8 +548,12 @@ export default function BusinessConsultingChat() {
                     <Crown className="w-8 h-8 text-white" />
                   </div>
                 </div>
-                <CardTitle className="text-3xl font-bold text-white mb-2">Choose Your Business Plan</CardTitle>
-                <p className="text-slate-300 text-lg">Get expert business consulting advice tailored to your needs</p>
+                <CardTitle className="text-3xl font-bold text-white mb-2">
+                  Choose Your Business Plan
+                </CardTitle>
+                <p className="text-slate-300 text-lg">
+                  Get expert business consulting advice tailored to your needs
+                </p>
               </CardHeader>
               <CardContent className="p-8">
                 <div className="grid md:grid-cols-2 gap-6">
@@ -549,27 +564,39 @@ export default function BusinessConsultingChat() {
                         <div className="w-12 h-12 bg-gradient-to-r from-slate-500 to-slate-600 rounded-xl flex items-center justify-center mx-auto mb-4">
                           <Zap className="w-6 h-6 text-white" />
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">Free Access</h3>
-                        <div className="text-4xl font-bold text-white mb-1">Rp 0</div>
+                        <h3 className="text-2xl font-bold text-white mb-2">
+                          Free Access
+                        </h3>
+                        <div className="text-4xl font-bold text-white mb-1">
+                          Rp 0
+                        </div>
                         <p className="text-slate-400">Limited Access</p>
                       </div>
 
                       <div className="space-y-3 mb-8">
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-slate-200">5 questions per session</span>
+                          <span className="text-slate-200">
+                            5 questions per session
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-slate-200">Basic business advice</span>
+                          <span className="text-slate-200">
+                            Basic business advice
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <X className="w-5 h-5 text-slate-500 flex-shrink-0" />
-                          <span className="text-slate-400 line-through">Consultation summaries</span>
+                          <span className="text-slate-400 line-through">
+                            Consultation summaries
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <X className="w-5 h-5 text-slate-500 flex-shrink-0" />
-                          <span className="text-slate-400 line-through">Unlimited conversations</span>
+                          <span className="text-slate-400 line-through">
+                            Unlimited conversations
+                          </span>
                         </div>
                       </div>
 
@@ -595,31 +622,45 @@ export default function BusinessConsultingChat() {
                         <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                           <Crown className="w-6 h-6 text-white" />
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">Premium Access</h3>
-                        <div className="text-4xl font-bold text-white mb-1">Rp 50,000</div>
+                        <h3 className="text-2xl font-bold text-white mb-2">
+                          Premium Access
+                        </h3>
+                        <div className="text-4xl font-bold text-white mb-1">
+                          Rp 50,000
+                        </div>
                         <p className="text-purple-200">Unlimited Access</p>
                       </div>
 
                       <div className="space-y-3 mb-8">
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-white font-medium">Unlimited questions</span>
+                          <span className="text-white font-medium">
+                            Unlimited questions
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-white font-medium">Advanced business strategies</span>
+                          <span className="text-white font-medium">
+                            Advanced business strategies
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-white font-medium">Consultation summaries</span>
+                          <span className="text-white font-medium">
+                            Consultation summaries
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-white font-medium">Priority support</span>
+                          <span className="text-white font-medium">
+                            Priority support
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-white font-medium">Export chat history</span>
+                          <span className="text-white font-medium">
+                            Export chat history
+                          </span>
                         </div>
                       </div>
 
@@ -634,7 +675,9 @@ export default function BusinessConsultingChat() {
                 </div>
 
                 <div className="text-center mt-8">
-                  <p className="text-slate-400 text-sm">You can upgrade or change your plan anytime in settings</p>
+                  <p className="text-slate-400 text-sm">
+                    You can upgrade or change your plan anytime in settings
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -642,8 +685,9 @@ export default function BusinessConsultingChat() {
         )}
         {/* Sidebar - Prompt History */}
         <div
-          className={`fixed inset-y-0 left-0 z-50 w-80 bg-black/20 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
+          className={`fixed inset-y-0 left-0 z-50 w-80 bg-black/20 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
         >
           <div className="flex flex-col h-full">
             {/* Sidebar Header */}
@@ -736,15 +780,15 @@ export default function BusinessConsultingChat() {
 
         {/* Main Content - Adjusts based on sidebar state */}
         <div
-          className={`flex-1 relative z-10 transition-all duration-300 ${sidebarOpen ? "lg:ml-80" : "ml-0"
-            }`}
+          className={`flex-1 relative z-10 transition-all duration-300 ${
+            sidebarOpen ? "lg:ml-80" : "ml-0"
+          }`}
         >
           <div className="container mx-auto px-4 py-8 max-w-4xl">
             {/* Header */}
             <div className="text-center mb-8">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center w-full">
-
                   <div className="flex-1 flex justify-center">
                     <div className="inline-flex items-center gap-3"></div>
                   </div>

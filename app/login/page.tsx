@@ -1,25 +1,32 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, EyeOff, Mail, Lock, ArrowLeft } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { authClient } from "@/lib/auth-client"; //import the auth client
-import { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const router = useRouter()
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const router = useRouter();
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    authClient.signIn.email({
+    e.preventDefault();
+    authClient.signIn.email(
+      {
         /**
          * The user email
          */
@@ -29,23 +36,21 @@ export default function LoginPage() {
          */
         password,
         /**
-         * remember the user session after the browser is closed. 
+         * remember the user session after the browser is closed.
          * @default true
          */
-        rememberMe: false
-}, {
-     onRequest: (ctx) => {
-            //show loading
-        },
-        onSuccess: (ctx) => {
-           router.push('/') 
+        rememberMe: false,
+      },
+      {
+        onSuccess: () => {
+          router.push("/");
         },
         onError: (ctx) => {
-            console.log(ctx)
-            alert(ctx.error.message);
+          alert(ctx.error.message);
         },
-})
-  }
+      }
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 relative overflow-hidden flex items-center justify-center p-4">
@@ -75,8 +80,12 @@ export default function LoginPage() {
 
         <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-2xl">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-white">Masuk</CardTitle>
-            <CardDescription className="text-purple-200">Masuk ke akun Anda untuk melanjutkan</CardDescription>
+            <CardTitle className="text-2xl font-bold text-white">
+              Masuk
+            </CardTitle>
+            <CardDescription className="text-purple-200">
+              Masuk ke akun Anda untuk melanjutkan
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -118,7 +127,11 @@ export default function LoginPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-300 hover:text-white"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -138,7 +151,10 @@ export default function LoginPage() {
 
               <div className="text-center">
                 <span className="text-purple-200">Belum punya akun? </span>
-                <Link href="/register" className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">
+                <Link
+                  href="/register"
+                  className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors"
+                >
                   Daftar sekarang
                 </Link>
               </div>
@@ -147,11 +163,11 @@ export default function LoginPage() {
         </Card>
 
         <div className="text-center mt-6">
-                <p className="text-slate-500 text-xs">
-                  © {new Date().getFullYear()} | Biznify
-                </p>
-              </div>
+          <p className="text-slate-500 text-xs">
+            © {new Date().getFullYear()} | Biznify
+          </p>
+        </div>
       </div>
     </div>
-  )
+  );
 }
