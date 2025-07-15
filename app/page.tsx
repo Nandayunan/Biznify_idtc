@@ -2,7 +2,6 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 import React from "react";
-import Spline from '@splinetool/react-spline/next';
 // import { useChat } from "ai/react"
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { authClient } from "@/lib/auth-client";
 import { User } from "lucide-react";
-import { LogOut } from 'lucide-react';
+import { LogOut } from "lucide-react";
 import {
   // Send,
   Bot,
@@ -23,7 +22,6 @@ import {
   Target,
   DollarSign,
   Users,
-  Menu,
   X,
   MessageSquare,
   Clock,
@@ -379,26 +377,25 @@ export default function BusinessConsultingChat() {
   const router = useRouter();
   const handleLogout = async () => {
     await authClient.signOut({
-    fetchOptions: {
-      onSuccess: () => {
-                
-                // Show success alert with timer
-                Swal.fire({
-                  title: "Logout Berhasil!",
-                  text: "Sampai Jumpa Kembali",
-                  icon: "success",
-                  showConfirmButton: false,
-                  customClass: {
-                    popup: "border border-purple-500/20"
-                  }
-                });
-                setTimeout(() => {
-                  Swal.close();
-                  router.push("/login");
-                }, 2000);
-              },
-    },
-  });
+      fetchOptions: {
+        onSuccess: () => {
+          // Show success alert with timer
+          Swal.fire({
+            title: "Logout Berhasil!",
+            text: "Sampai Jumpa Kembali",
+            icon: "success",
+            showConfirmButton: false,
+            customClass: {
+              popup: "border border-purple-500/20",
+            },
+          });
+          setTimeout(() => {
+            Swal.close();
+            router.push("/login");
+          }, 2000);
+        },
+      },
+    });
   };
 
   // const handleFormSubmit = (e: React.FormEvent) => {
@@ -497,9 +494,7 @@ export default function BusinessConsultingChat() {
       <div className="relative w-full px-0 pt-20 pb-8 min-h-screen">
         {/* Header */}
         <div className="fixed top-0 left-0 right-0 w-full z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10">
-          <header
-            className="w-full px-2 sm:px-4 py-3 flex items-center justify-between gap-2"
-          >
+          <header className="w-full px-2 sm:px-4 py-3 flex items-center justify-between gap-2">
             {/* Sidebar Prompt Button - paling ujung kiri */}
             <div className="flex-shrink-0 flex items-center justify-start w-auto">
               <Button
@@ -534,10 +529,11 @@ export default function BusinessConsultingChat() {
             {/* Plan Badge & Upgrade Button - paling kanan */}
             <div className="flex items-center gap-2 flex-shrink-0 justify-end w-auto">
               <Badge
-                className={`${subscriptionPlan === "premium"
-                  ? "bg-gradient-to-r from-purple-500 to-pink-500"
-                  : "bg-slate-600"
-                  } text-white border-0 px-3 py-1`}
+                className={`${
+                  subscriptionPlan === "premium"
+                    ? "bg-gradient-to-r from-purple-500 to-pink-500"
+                    : "bg-slate-600"
+                } text-white border-0 px-3 py-1`}
               >
                 {subscriptionPlan === "premium" ? (
                   <>
@@ -718,7 +714,9 @@ export default function BusinessConsultingChat() {
         )}
         {/* Sidebar - Prompt History */}
         <div
-          className={`fixed inset-y-0 left-0 z-50 w-64 sm:w-80 bg-black/80 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+          className={`fixed inset-y-0 left-0 z-50 w-64 sm:w-80 bg-black/80 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
         >
           <div className="flex flex-col h-full">
             {/* Sidebar Header */}
@@ -829,14 +827,16 @@ export default function BusinessConsultingChat() {
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            style={{ top: '56px' }} // header height
+            style={{ top: "56px" }} // header height
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Main Content - Adjusts based on sidebar state */}
         <div
-          className={`flex-1 relative z-10 transition-all duration-300 ${sidebarOpen ? "lg:ml-80" : "ml-0"} pt-2`}
+          className={`flex-1 relative z-10 transition-all duration-300 ${
+            sidebarOpen ? "lg:ml-80" : "ml-0"
+          } pt-2`}
         >
           <div className="w-full px-0 py-8">
             {/* Header */}
