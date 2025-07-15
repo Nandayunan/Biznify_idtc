@@ -3,18 +3,18 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import React from "react"
 
-import { useChat } from "ai/react"
+// import { useChat } from "ai/react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+// import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+// import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
+// import { ScrollArea } from "@/components/ui/scroll-area"
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { User } from "lucide-react";
 import {
-  Send,
+  // Send,
   Bot,
   Sparkles,
   TrendingUp,
@@ -51,7 +51,7 @@ declare global {
   }
 }
 
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { UIMessage } from "ai";
 
 const suggestedQuestions = [
@@ -66,6 +66,24 @@ interface UserPrompt {
   content: string;
   timestamp: Date;
   sessionId: string;
+}
+
+interface SavedChatSession {
+  id: string;
+  title: string;
+  timestamp: string;
+  messages: UIMessage[];
+}
+
+interface SavedUserPrompt {
+  id: string;
+  content: string;
+  timestamp: string;
+  sessionId: string;
+}
+
+interface MockEvent {
+  preventDefault?: () => void;
 }
 
 interface ChatSession {
@@ -211,7 +229,7 @@ const SplineViewer: React.FC<SplineViewerProps> = ({ url, className = "" }) => {
 };
 
 export default function BusinessConsultingChat() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChatContext();
+  const { messages, handleSubmit, setMessages } = useChatContext();
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
   const [showConclusionButton, setShowConclusionButton] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -222,7 +240,7 @@ export default function BusinessConsultingChat() {
   const [subscriptionPlan, setSubscriptionPlan] = useState<"free" | "premium">("free")
   const [messageCount, setMessageCount] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
+  // const router = useRouter()
 
 
   void chatHistory;
@@ -247,9 +265,9 @@ export default function BusinessConsultingChat() {
     // Load chat history and prompt history from localStorage
     const savedHistory = localStorage.getItem("chatHistory")
     if (savedHistory) {
-      const parsed = JSON.parse(savedHistory)
+      const parsed: SavedChatSession[] = JSON.parse(savedHistory)
       setChatHistory(
-        parsed.map((session: any) => ({
+        parsed.map((session) => ({
           ...session,
           timestamp: new Date(session.timestamp),
         })),
@@ -258,9 +276,9 @@ export default function BusinessConsultingChat() {
 
     const savedPrompts = localStorage.getItem("promptHistory")
     if (savedPrompts) {
-      const parsed = JSON.parse(savedPrompts)
+      const parsed: SavedUserPrompt[] = JSON.parse(savedPrompts)
       setPromptHistory(
-        parsed.map((prompt: any) => ({
+        parsed.map((prompt) => ({
           ...prompt,
           timestamp: new Date(prompt.timestamp),
         })),
@@ -333,7 +351,7 @@ export default function BusinessConsultingChat() {
       setShowSubscriptionModal(true)
       return
     }
-    handleSubmit(new Event("submit") as any, { data: { message: question } })
+    handleSubmit({} as MockEvent, { data: { message: question } })
   }
 
   const handleAreaClick = (area: string) => {
@@ -344,28 +362,28 @@ export default function BusinessConsultingChat() {
     }
     setSelectedArea(area)
     const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`
-    handleSubmit(new Event("submit") as any, { data: { message: areaPrompt } })
+    handleSubmit({} as MockEvent, { data: { message: areaPrompt } })
   }
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    // Check free plan limit - prevent submission after 5 messages
-    if (subscriptionPlan === "free" && messageCount >= 5) {
-      e.preventDefault()
-      setShowSubscriptionModal(true)
-      return
-    }
-    handleSubmit(e)
-  }
+  // const handleFormSubmit = (e: React.FormEvent) => {
+  //   // Check free plan limit - prevent submission after 5 messages
+  //   if (subscriptionPlan === "free" && messageCount >= 5) {
+  //     e.preventDefault()
+  //     setShowSubscriptionModal(true)
+  //     return
+  //   }
+  //   handleSubmit(e)
+  // }
 
-  const handleCreateConclusion = () => {
-    // Premium feature check
-    if (subscriptionPlan === "free") {
-      setShowSubscriptionModal(true)
-      return
-    }
-    sessionStorage.setItem("chatMessages", JSON.stringify(messages))
-    router.push("/conclusion")
-  }
+  // const handleCreateConclusion = () => {
+  //   // Premium feature check
+  //   if (subscriptionPlan === "free") {
+  //     setShowSubscriptionModal(true)
+  //     return
+  //   }
+  //   sessionStorage.setItem("chatMessages", JSON.stringify(messages))
+  //   router.push("/conclusion")
+  // }
 
   const handleSubscriptionChoice = (plan: "free" | "premium") => {
     setSubscriptionPlan(plan)
@@ -374,11 +392,11 @@ export default function BusinessConsultingChat() {
     setShowSubscriptionModal(false)
   }
 
-  const loadChatSession = (session: ChatSession) => {
-    setMessages(session.messages)
-    setCurrentSessionId(session.id)
-    setSidebarOpen(false)
-  }
+  // const loadChatSession = (session: ChatSession) => {
+  //   setMessages(session.messages)
+  //   setCurrentSessionId(session.id)
+  //   setSidebarOpen(false)
+  // }
 
   const startNewChat = () => {
     setMessages([])
@@ -403,7 +421,7 @@ export default function BusinessConsultingChat() {
       setShowSubscriptionModal(true)
       return
     }
-    handleSubmit(new Event("submit") as any, { data: { message: prompt.content } })
+    handleSubmit({} as MockEvent, { data: { message: prompt.content } })
     setSidebarOpen(false)
   }
 
