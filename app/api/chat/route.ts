@@ -28,6 +28,11 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: openai("gpt-4.1"),
+    providerOptions: {
+      openai: {
+        store: true,
+      },
+    },
     system: SYSTEM_PROMPT,
     tools: {
       generateQuestion: tool({
@@ -46,7 +51,9 @@ export async function POST(req: Request) {
       generateConclusion: tool({
         description: "Membuat kesimpulan dari pertanyaan yang ditanyakan",
         parameters: z.object({
-          conclusion: z.string().describe("Kesimpulan dari pertanyaan yang ditanyakan"),
+          conclusion: z
+            .string()
+            .describe("Kesimpulan dari pertanyaan yang ditanyakan"),
         }),
       }),
     },
