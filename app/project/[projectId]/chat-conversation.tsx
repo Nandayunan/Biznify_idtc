@@ -9,7 +9,7 @@ import {
   AIMessage,
   AIMessageContent,
 } from "@/components/ui/kibo-ui/ai/message";
-import { useChatContext } from "../chat-context";
+import { useChatContext } from "@/app/chat-context";
 import React from "react";
 import { Button } from "@/components/ui/button";
 

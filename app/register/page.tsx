@@ -17,12 +17,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Mail, Lock, User, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Swal from 'sweetalert2'
+import Swal from "sweetalert2";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -36,38 +36,42 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    authClient.signUp.email({
-        email:formData.email, 
-        password:formData.password, 
-        name:formData.name 
-    }, {
-        onRequest: (ctx) => {
-            setIsLoading(true)
+    e.preventDefault();
+    authClient.signUp.email(
+      {
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+      },
+      {
+        onRequest: () => {
+          setIsLoading(true);
         },
-        onSuccess: (ctx) => {
-           setIsLoading(false)
-            Swal.fire({
-              icon: 'success',
-              title: 'Registrasi Berhasil!',
-              text: 'Akun Anda telah berhasil dibuat. Silakan login untuk melanjutkan.',
-              confirmButtonColor: '#8b5cf6',
-              confirmButtonText: 'Login'
-            }).then((result) => {
-              if (result.isConfirmed) {
-                router.push('/login')
-              }
-            })
+        onSuccess: () => {
+          setIsLoading(false);
+          Swal.fire({
+            icon: "success",
+            title: "Registrasi Berhasil!",
+            text: "Akun Anda telah berhasil dibuat. Silakan login untuk melanjutkan.",
+            confirmButtonColor: "#8b5cf6",
+            confirmButtonText: "Login",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              router.push("/login");
+            }
+          });
         },
         onError: (ctx) => {
-            setIsLoading(false)
-            console.log(ctx)
-            Swal.fire({
-              icon: 'error',
-              title: 'Registrasi Gagal',
-              text: ctx.error.message || 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.',
-              confirmButtonColor: '#8b5cf6'
-            })
+          setIsLoading(false);
+          console.log(ctx);
+          Swal.fire({
+            icon: "error",
+            title: "Registrasi Gagal",
+            text:
+              ctx.error.message ||
+              "Terjadi kesalahan saat mendaftar. Silakan coba lagi.",
+            confirmButtonColor: "#8b5cf6",
+          });
         },
       }
     );
