@@ -2,13 +2,15 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { useState, useRef, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState, useRef, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { User } from "lucide-react";
 import {
+  Send,
   Bot,
   Sparkles,
   TrendingUp,
@@ -21,6 +23,9 @@ import {
   Clock,
   Trash2,
   History,
+  Crown,
+  Check,
+  Zap,
 } from "lucide-react";
 import ChatInput from "./chat-input";
 import ChatMessages from "./chat-messages";
@@ -30,9 +35,12 @@ import { useChatContext } from "./chat-context";
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      'spline-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+      "spline-viewer": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      > & {
         url?: string;
-        'events-target'?: string;
+        "events-target"?: string;
         loading?: string;
       };
     }
@@ -84,32 +92,37 @@ const useSplineLoader = () => {
 
   useEffect(() => {
     // Check if script already exists
-    const existingScript = document.querySelector('script[src*="spline-viewer"]');
-    
+    const existingScript = document.querySelector(
+      'script[src*="spline-viewer"]'
+    );
+
     if (existingScript) {
       setIsLoaded(true);
       return;
     }
 
     // Create and load script
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.src = 'https://unpkg.com/@splinetool/viewer@1.10.27/build/spline-viewer.js';
+    const script = document.createElement("script");
+    script.type = "module";
+    script.src =
+      "https://unpkg.com/@splinetool/viewer@1.10.27/build/spline-viewer.js";
     script.async = true;
-    
+
     script.onload = () => {
       setIsLoaded(true);
     };
-    
+
     script.onerror = () => {
-      console.error('Failed to load Spline viewer');
+      console.error("Failed to load Spline viewer");
     };
 
     document.head.appendChild(script);
 
     return () => {
       // Cleanup on unmount
-      const scriptToRemove = document.querySelector('script[src*="spline-viewer"]');
+      const scriptToRemove = document.querySelector(
+        'script[src*="spline-viewer"]'
+      );
       if (scriptToRemove) {
         document.head.removeChild(scriptToRemove);
       }
@@ -140,14 +153,14 @@ const SplineViewer: React.FC<SplineViewerProps> = ({ url, className = "" }) => {
   useEffect(() => {
     if (isSplineLoaded && splineRef.current) {
       // Make sure the custom element is properly recognized
-      if (!customElements.get('spline-viewer')) {
+      if (!customElements.get("spline-viewer")) {
         // Wait a bit for the script to fully register the custom element
         setTimeout(() => {
           if (splineRef.current) {
-            splineRef.current.setAttribute('url', url);
-            
+            splineRef.current.setAttribute("url", url);
+
             // Add event listener untuk akses ke spline app setelah load
-            splineRef.current.addEventListener('load', () => {
+            splineRef.current.addEventListener("load", () => {
               try {
                 // Akses spline app untuk mengatur kamera
                 const splineApp = splineRef.current?.spline;
@@ -156,11 +169,11 @@ const SplineViewer: React.FC<SplineViewerProps> = ({ url, className = "" }) => {
                   splineApp.setZoom(1);
                   // Jika ada fungsi untuk reset kamera orientation
                   if (splineApp.emitEvent) {
-                    splineApp.emitEvent('resetCamera');
+                    splineApp.emitEvent("resetCamera");
                   }
                 }
               } catch (error) {
-                console.log('Spline camera adjustment not available:', error);
+                console.log("Spline camera adjustment not available:", error);
               }
             });
           }
@@ -177,32 +190,36 @@ const SplineViewer: React.FC<SplineViewerProps> = ({ url, className = "" }) => {
     );
   }
 
-  return React.createElement('spline-viewer', {
+  return React.createElement("spline-viewer", {
     ref: splineRef,
     url: url,
     className: className,
     style: {
-      width: '100%',
-      height: '100%',
-      display: 'block',
-      transform: 'translate(90px, 100px)',
-      transformOrigin: 'center center'
+      width: "100%",
+      height: "100%",
+      display: "block",
+      transform: "translate(90px, 100px)",
+      transformOrigin: "center center",
     },
-    loading: 'lazy',
-    'events-target': 'global'
+    loading: "lazy",
+    "events-target": "global",
   });
 };
 
 export default function BusinessConsultingChat() {
   const { messages, handleSubmit, setMessages } = useChatContext();
-  const [selectedArea, setSelectedArea] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [chatHistory, setChatHistory] = useState<ChatSession[]>([]);
-  const [promptHistory, setPromptHistory] = useState<UserPrompt[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string>("");
-  const [showConclusionButton, setShowConclusionButton] = useState(false);
-  const router = useRouter();
+  const [selectedArea, setSelectedArea] = useState<string | null>(null)
+  const [showConclusionButton, setShowConclusionButton] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [chatHistory, setChatHistory] = useState<ChatSession[]>([])
+  const [promptHistory, setPromptHistory] = useState<UserPrompt[]>([])
+  const [currentSessionId, setCurrentSessionId] = useState<string>("")
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
+  const [subscriptionPlan, setSubscriptionPlan] = useState<"free" | "premium">("free")
+  const [messageCount, setMessageCount] = useState(0)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+
 
   void chatHistory;
   void selectedArea;
@@ -215,6 +232,21 @@ export default function BusinessConsultingChat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+
+  useEffect(() => {
+    // Check if user has seen subscription modal
+    const hasSeenModal = localStorage.getItem("hasSeenSubscriptionModal")
+    const savedPlan = localStorage.getItem("subscriptionPlan") as "free" | "premium" | null
+
+    if (!hasSeenModal) {
+      setShowSubscriptionModal(true)
+    }
+
+    if (savedPlan) {
+      setSubscriptionPlan(savedPlan)
+    }
+  }, []);
 
   useEffect(() => {
     // Load chat history and prompt history from localStorage
@@ -253,6 +285,18 @@ export default function BusinessConsultingChat() {
       setShowConclusionButton(true);
     }
   }, [messages]);
+
+  useEffect(() => {
+    // Count user messages for free plan limit
+    const userMessages = messages.filter((m) => m.role === "user")
+    setMessageCount(userMessages.length)
+
+    // Show conclusion button after 3+ meaningful exchanges
+    const meaningfulMessages = messages.filter((m) => m.content.length > 50)
+    if (meaningfulMessages.length >= 4) {
+      setShowConclusionButton(true)
+    }
+  }, [messages])
 
   useEffect(() => {
     // Save current session to history when messages change
@@ -313,6 +357,13 @@ export default function BusinessConsultingChat() {
 
   void handleCreateConclusion;
 
+  const handleSubscriptionChoice = (plan: "free" | "premium") => {
+    setSubscriptionPlan(plan)
+    localStorage.setItem("subscriptionPlan", plan)
+    localStorage.setItem("hasSeenSubscriptionModal", "true")
+    setShowSubscriptionModal(false)
+  }
+
   const loadChatSession = (session: ChatSession) => {
     setMessages(session.messages);
     setCurrentSessionId(session.id);
@@ -369,10 +420,9 @@ export default function BusinessConsultingChat() {
 
       {/* 3D Spline Background - Digeser ke kanan */}
       <div className="absolute inset-0 z-0">
-        <SplineViewer 
+        <SplineViewer
           url="https://prod.spline.design/y0EnxvXrPRsZpMhP/scene.splinecode"
           className="w-full h-full opacity-30"
-          
         />
       </div>
 
@@ -395,11 +445,124 @@ export default function BusinessConsultingChat() {
               </p>
             </div>
           </div>
+
+          {/* Subscription Modal */}
+          {showSubscriptionModal && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl max-w-4xl w-full">
+                <CardHeader className="text-center pb-6">
+                  <div className="flex justify-center mb-4">
+                    <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <Crown className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                  <CardTitle className="text-3xl font-bold text-white mb-2">Choose Your Business Plan</CardTitle>
+                  <p className="text-slate-300 text-lg">Get expert business consulting advice tailored to your needs</p>
+                </CardHeader>
+                <CardContent className="p-8">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Free Plan */}
+                    <Card className="bg-white/5 border-white/20 hover:bg-white/10 transition-all duration-300 relative">
+                      <CardContent className="p-6">
+                        <div className="text-center mb-6">
+                          <div className="w-12 h-12 bg-gradient-to-r from-slate-500 to-slate-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                            <Zap className="w-6 h-6 text-white" />
+                          </div>
+                          <h3 className="text-2xl font-bold text-white mb-2">Free Access</h3>
+                          <div className="text-4xl font-bold text-white mb-1">Rp 0</div>
+                          <p className="text-slate-400">Limited Access</p>
+                        </div>
+
+                        <div className="space-y-3 mb-8">
+                          <div className="flex items-center gap-3">
+                            <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                            <span className="text-slate-200">5 questions per session</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                            <span className="text-slate-200">Basic business advice</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <X className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                            <span className="text-slate-400 line-through">Consultation summaries</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <X className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                            <span className="text-slate-400 line-through">Unlimited conversations</span>
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={() => handleSubscriptionChoice("free")}
+                          variant="outline"
+                          className="w-full bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/50 rounded-xl py-3 font-medium"
+                        >
+                          Start Free
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    {/* Premium Plan */}
+                    <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-400/30 hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-300 relative">
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 px-4 py-1">
+                          Most Popular
+                        </Badge>
+                      </div>
+                      <CardContent className="p-6">
+                        <div className="text-center mb-6">
+                          <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                            <Crown className="w-6 h-6 text-white" />
+                          </div>
+                          <h3 className="text-2xl font-bold text-white mb-2">Premium Access</h3>
+                          <div className="text-4xl font-bold text-white mb-1">Rp 50,000</div>
+                          <p className="text-purple-200">Unlimited Access</p>
+                        </div>
+
+                        <div className="space-y-3 mb-8">
+                          <div className="flex items-center gap-3">
+                            <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                            <span className="text-white font-medium">Unlimited questions</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                            <span className="text-white font-medium">Advanced business strategies</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                            <span className="text-white font-medium">Consultation summaries</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                            <span className="text-white font-medium">Priority support</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                            <span className="text-white font-medium">Export chat history</span>
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={() => handleSubscriptionChoice("premium")}
+                          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-xl py-3 font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                        >
+                          Upgrade to Premium
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="text-center mt-8">
+                    <p className="text-slate-400 text-sm">You can upgrade or change your plan anytime in settings</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
           {/* Sidebar - Prompt History */}
           <div
-            className={`fixed inset-y-0 left-0 z-50 w-80 bg-black/20 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
-              sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
+            className={`fixed inset-y-0 left-0 z-50 w-80 bg-black/20 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+              }`}
           >
             <div className="flex flex-col h-full">
               {/* Sidebar Header */}
@@ -492,37 +655,38 @@ export default function BusinessConsultingChat() {
 
           {/* Main Content - Adjusts based on sidebar state */}
           <div
-            className={`flex-1 relative z-10 transition-all duration-300 ${
-              sidebarOpen ? "lg:ml-80" : "ml-0"
-            }`}
+            className={`flex-1 relative z-10 transition-all duration-300 ${sidebarOpen ? "lg:ml-80" : "ml-0"
+              }`}
           >
             <div className="container mx-auto px-4 py-8 max-w-4xl">
               {/* Header */}
               <div className="text-center mb-8">
                 <div className="flex items-center justify-between mb-4">
-                  <Button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    variant="ghost"
-                    className="text-white hover:bg-white/10 rounded-xl"
-                  >
-                    <Menu className="w-100 h-50 mr-2" />
-                    <span className="hidden sm:inline">Prompts</span>
-                  </Button>
-                  <div className="flex-1 flex justify-center">
-                    <div className="inline-flex items-center gap-3"></div>
+                  <div className="flex items-center w-full">
+                    <Button
+                      onClick={() => setSidebarOpen(!sidebarOpen)}
+                      variant="ghost"
+                      className="text-white hover:bg-white/10 rounded-xl absolute left-0 top-0 ml-2 mt-2 z-50"
+                      style={{ position: "absolute", left: 0, top: 0, marginLeft: "0.5rem", marginTop: "0.5rem", zIndex: 50 }}
+                    >
+                      <Menu className="w-100 h-50 mr-2" />
+                      <span className="hidden sm:inline">Prompts</span>
+                    </Button>
+                    <div className="flex-1 flex justify-center">
+                      <div className="inline-flex items-center gap-3"></div>
+                    </div>
+                    <div className="w-20"></div> {/* Spacer for balance */}
                   </div>
-                  <div className="w-20"></div> {/* Spacer for balance */}
                 </div>
 
-
-          {messages.length === 0 && (
-            <>
-              <p className="text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed backdrop-blur-sm bg-black/20 rounded-lg p-4">
-                Chatbot pintar berbasis AI yang dirancang khusus untuk membantu
-                pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) dalam
-                mengembangkan strategi bisnis yang lebih efisien, tepat sasaran,
-                dan berkelanjutan.
-              </p>
+                {messages.length === 0 && (
+                  <>
+                    <p className="text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed backdrop-blur-sm bg-black/20 rounded-lg p-4">
+                      Chatbot pintar berbasis AI yang dirancang khusus untuk
+                      membantu pelaku Usaha Mikro, Kecil, dan Menengah (UMKM)
+                      dalam mengembangkan strategi bisnis yang lebih efisien,
+                      tepat sasaran, dan berkelanjutan.
+                    </p>
 
                     {/* Business Areas */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -546,41 +710,40 @@ export default function BusinessConsultingChat() {
                       ))}
                     </div>
 
-              {/* Suggested Questions */}
-              <div className="space-y-3">
-                <p className="text-slate-400 text-sm font-medium flex items-center justify-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Coba pertanyaan berikut untuk memulai:
-                </p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {suggestedQuestions.map((question, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="bg-white/10 hover:bg-white/20 text-white border-white/20 cursor-pointer transition-all duration-300 hover:scale-105 px-4 py-2 backdrop-blur-sm"
-                      onClick={() => handleSuggestedQuestion(question)}
-                    >
-                      {question}
-                    </Badge>
-                  ))}
-                </div>
+                    {/* Suggested Questions */}
+                    <div className="space-y-3">
+                      <p className="text-slate-400 text-sm font-medium flex items-center justify-center gap-2">
+                        <Sparkles className="w-4 h-4" />
+                        Coba pertanyaan berikut untuk memulai:
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {suggestedQuestions.map((question, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="bg-white/10 hover:bg-white/20 text-white border-white/20 cursor-pointer transition-all duration-300 hover:scale-105 px-4 py-2 backdrop-blur-sm"
+                            onClick={() => handleSuggestedQuestion(question)}
+                          >
+                            {question}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-            </>
-          )}
-        </div>
 
-        {/* Chat Messages */}
-        {messages.length > 0 && (
-          <div className="backdrop-blur-sm bg-black/20 rounded-lg">
-            <ChatMessages />
-          </div>
-        )}
+              {/* Chat Messages */}
+              {messages.length > 0 && (
+                <div className="backdrop-blur-sm bg-black/20 rounded-lg">
+                  <ChatMessages />
+                </div>
+              )}
 
-        {/* Input Form */}
-        <div className="backdrop-blur-sm bg-black/20 rounded-lg p-2">
-          <ChatInput />
-        </div>
-
+              {/* Input Form */}
+              <div className="backdrop-blur-sm bg-black/20 rounded-lg p-2">
+                <ChatInput />
+              </div>
 
               {/* Footer */}
               <div className="text-center mt-6">
@@ -594,9 +757,5 @@ export default function BusinessConsultingChat() {
         </div>
       </div>
     </div>
-    </div>
-    </div>
-    </div>
   );
-
 }
