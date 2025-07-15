@@ -15,12 +15,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Swal from 'sweetalert2'
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -34,19 +36,38 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    authClient.signUp.email(
-      {
-        email: formData.email, // user email address
-        password: formData.password, // user password -> min 8 characters by default
-        name: formData.name, // A URL to redirect to after the user verifies their email (optional)
-      },
-      {
-        onSuccess: () => {
-          router.push("/login");
+    e.preventDefault()
+    authClient.signUp.email({
+        email:formData.email, 
+        password:formData.password, 
+        name:formData.name 
+    }, {
+        onRequest: (ctx) => {
+            setIsLoading(true)
+        },
+        onSuccess: (ctx) => {
+           setIsLoading(false)
+            Swal.fire({
+              icon: 'success',
+              title: 'Registrasi Berhasil!',
+              text: 'Akun Anda telah berhasil dibuat. Silakan login untuk melanjutkan.',
+              confirmButtonColor: '#8b5cf6',
+              confirmButtonText: 'Login'
+            }).then((result) => {
+              if (result.isConfirmed) {
+                router.push('/login')
+              }
+            })
         },
         onError: (ctx) => {
-          alert(ctx.error.message);
+            setIsLoading(false)
+            console.log(ctx)
+            Swal.fire({
+              icon: 'error',
+              title: 'Registrasi Gagal',
+              text: ctx.error.message || 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.',
+              confirmButtonColor: '#8b5cf6'
+            })
         },
       }
     );
@@ -98,6 +119,7 @@ export default function RegisterPage() {
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-purple-300 focus:border-purple-400 focus:ring-purple-400"
+                    disabled={isLoading}
                     required
                   />
                 </div>
@@ -116,6 +138,7 @@ export default function RegisterPage() {
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-purple-300 focus:border-purple-400 focus:ring-purple-400"
+                    disabled={isLoading}
                     required
                   />
                 </div>
@@ -136,12 +159,14 @@ export default function RegisterPage() {
                       handleInputChange("password", e.target.value)
                     }
                     className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-purple-300 focus:border-purple-400 focus:ring-purple-400"
+                    disabled={isLoading}
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-300 hover:text-white"
+                    disabled={isLoading}
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4" />
@@ -170,12 +195,14 @@ export default function RegisterPage() {
                       handleInputChange("confirmPassword", e.target.value)
                     }
                     className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-purple-300 focus:border-purple-400 focus:ring-purple-400"
+                    disabled={isLoading}
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-300 hover:text-white"
+                    disabled={isLoading}
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="w-4 h-4" />
@@ -194,6 +221,7 @@ export default function RegisterPage() {
                     handleInputChange("agreeToTerms", checked as boolean)
                   }
                   className="border-white/20 data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500"
+                  disabled={isLoading}
                 />
                 <Label htmlFor="terms" className="text-sm text-purple-200">
                   Saya setuju dengan Syarat & Ketentuan dan Kebijakan Privasi
@@ -205,7 +233,14 @@ export default function RegisterPage() {
                 disabled={!formData.agreeToTerms}
                 className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-black-600 hover:to-cyan-600 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:scale-100"
               >
-                Daftar Sekarang
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Mendaftar...
+                  </>
+                ) : (
+                  "Daftar Sekarang"
+                )}
               </Button>
 
               <div className="text-center">
