@@ -26,7 +26,7 @@ export default function ChatInput() {
       const project = await createProject.mutateAsync({ title: input });
       setInput("");
       router.push(`/project/${project.id}`);
-    } catch (err) {
+    } catch {
       // Optionally handle error
       alert("Failed to create project");
     } finally {
