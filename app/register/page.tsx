@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import { authClient } from "@/lib/auth-client"; //import the auth client
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft } from "lucide-react"
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -21,19 +22,34 @@ export default function RegisterPage() {
     confirmPassword: "",
     agreeToTerms: false,
   })
-
+  const router = useRouter();
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle registration logic here
+    authClient.signUp.email({
+        email:formData.email, // user email address
+        password:formData.password, // user password -> min 8 characters by default
+        name:formData.name // A URL to redirect to after the user verifies their email (optional)
+    }, {
+        onRequest: (ctx) => {
+            //show loading
+        },
+        onSuccess: (ctx) => {
+           router.push('/login') 
+        },
+        onError: (ctx) => {
+            console.log(ctx)
+            alert(ctx.error.message);
+        },
+});
     console.log("Registration attempt:", formData)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 relative overflow-hidden flex items-center justify-center p-4">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl"></div>
@@ -42,18 +58,13 @@ export default function RegisterPage() {
 
       <div className="relative w-full max-w-md">
         {/* Back to home link */}
-        <Link href="/" className="inline-flex items-center text-white/80 hover:text-white mb-6 transition-colors">
+        {/* <Link href="/" className="inline-flex items-center text-white/80 hover:text-white mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Kembali ke Beranda
-        </Link>
+        </Link> */}
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-pink-500 to-cyan-500 rounded-2xl mb-4">
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-              <User className="w-4 h-4 text-purple-600" />
-            </div>
-          </div>
           <h1 className="text-2xl font-bold text-white">Biznify AI</h1>
           <p className="text-purple-200 text-sm">asisten digital bisnis Anda</p>
         </div>
@@ -161,21 +172,14 @@ export default function RegisterPage() {
                   className="border-white/20 data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500"
                 />
                 <Label htmlFor="terms" className="text-sm text-purple-200">
-                  Saya setuju dengan{" "}
-                  <Link href="/terms" className="text-cyan-400 hover:text-cyan-300 underline">
-                    Syarat & Ketentuan
-                  </Link>{" "}
-                  dan{" "}
-                  <Link href="/privacy" className="text-cyan-400 hover:text-cyan-300 underline">
-                    Kebijakan Privasi
-                  </Link>
+                  Saya setuju dengan Syarat & Ketentuan dan Kebijakan Privasi
                 </Label>
               </div>
 
               <Button
                 type="submit"
                 disabled={!formData.agreeToTerms}
-                className="w-full bg-gradient-to-r from-pink-500 to-cyan-500 hover:from-pink-600 hover:to-cyan-600 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:scale-100"
+                className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-black-600 hover:to-cyan-600 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:scale-100"
               >
                 Daftar Sekarang
               </Button>
@@ -191,8 +195,10 @@ export default function RegisterPage() {
         </Card>
 
         <div className="text-center mt-6">
-          <p className="text-purple-300 text-sm">© 2025 Biznify AI. All rights reserved.</p>
-        </div>
+                <p className="text-slate-500 text-xs">
+                  © {new Date().getFullYear()} | Biznify
+                </p>
+              </div>
       </div>
     </div>
   )
