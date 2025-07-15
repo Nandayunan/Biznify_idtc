@@ -14,7 +14,11 @@ export default function ProjectPage() {
 
   const { append } = useChatContext();
 
-  const { data: project } = trpc.project.getById.useQuery(
+  const {
+    data: project,
+    isLoading,
+    isError,
+  } = trpc.project.getById.useQuery(
     {
       id: projectId ?? "",
     },
@@ -30,7 +34,16 @@ export default function ProjectPage() {
         content: project.title,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Error</div>;
+  }
 
   if (!project) {
     return <div>Project not found</div>;
