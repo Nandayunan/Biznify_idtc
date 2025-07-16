@@ -7,7 +7,7 @@ import ChatInput from "./chat-input"
 import SummarySection from "./summary-section"
 import { trpc } from "@/lib/trpc"
 import { useChatContext } from "@/app/chat-context"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { User, Bot, Crown, History, X, MessageSquare, Clock, Trash2, Menu } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -64,6 +64,17 @@ export default function ProjectPage() {
   const [currentSessionId, setCurrentSessionId] = useState<string>("")
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
 
+  // Resizable panel states
+  const [summaryWidth, setSummaryWidth] = useState(400) // Default width in pixels
+  const [isResizing, setIsResizing] = useState(false)
+  const [startX, setStartX] = useState(0)
+  const [startWidth, setStartWidth] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Min and max widths for summary section
+  const MIN_SUMMARY_WIDTH = 300
+  const MAX_SUMMARY_WIDTH = 800
+
   const {
     data: project,
     isLoading,
@@ -79,6 +90,54 @@ export default function ProjectPage() {
   )
 
   const router = useRouter()
+
+  // Resizing handlers
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      setIsResizing(true)
+      setStartX(e.clientX)
+      setStartWidth(summaryWidth)
+    },
+    [summaryWidth],
+  )
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isResizing) return
+
+      const deltaX = startX - e.clientX // Reversed because we're resizing from the left
+      const newWidth = Math.min(Math.max(startWidth + deltaX, MIN_SUMMARY_WIDTH), MAX_SUMMARY_WIDTH)
+      setSummaryWidth(newWidth)
+    },
+    [isResizing, startX, startWidth],
+  )
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false)
+  }, [])
+
+  // Add event listeners for mouse move and up
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mouseup", handleMouseUp)
+      document.body.style.cursor = "ew-resize"
+      document.body.style.userSelect = "none"
+    } else {
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+      document.body.style.cursor = ""
+      document.body.style.userSelect = ""
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+      document.body.style.cursor = ""
+      document.body.style.userSelect = ""
+    }
+  }, [isResizing, handleMouseMove, handleMouseUp])
 
   const startNewChat = () => {
     setMessages([])
@@ -274,9 +333,13 @@ export default function ProjectPage() {
         }`}
       >
         <div className="h-full p-4">
-          {/* Desktop Layout */}
-          <div className="hidden lg:flex gap-4 h-full">
-            <div className="w-[400px] h-full grid grid-rows-[1fr_auto] gap-4">
+          {/* Desktop Layout with Resizable Panels */}
+          <div className="hidden lg:flex gap-4 h-full" ref={containerRef}>
+            {/* Chat Section - Dynamic width */}
+            <div
+              className="h-full grid grid-rows-[1fr_auto] gap-4 transition-all duration-200"
+              style={{ width: `calc(100% - ${summaryWidth}px - 1rem)` }}
+            >
               <div className="overflow-y-auto bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
                 <ChatConversation />
               </div>
@@ -284,8 +347,27 @@ export default function ProjectPage() {
                 <ChatInput />
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
-              <SummarySection />
+
+            {/* Resizable Summary Section */}
+            <div
+              className="relative h-full overflow-y-auto bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl transition-all duration-200"
+              style={{ width: `${summaryWidth}px` }}
+            >
+              {/* Resize Handle */}
+              <div
+                className={`absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-purple-500/50 transition-colors duration-200 ${
+                  isResizing ? "bg-purple-500" : "bg-transparent"
+                } group`}
+                onMouseDown={handleMouseDown}
+              >
+                {/* Visual indicator */}
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 bg-white/20 rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+              </div>
+
+              {/* Summary Content */}
+              <div className="pl-2">
+                <SummarySection />
+              </div>
             </div>
           </div>
 
@@ -295,12 +377,10 @@ export default function ProjectPage() {
             <div className="flex-[0.7] overflow-y-auto bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
               <ChatConversation />
             </div>
-
             {/* ChatInput - Fixed height */}
             <div className="flex-shrink-0 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
               <ChatInput />
             </div>
-
             {/* SummarySection - Remaining space, scrollable */}
             <div className="flex-1 overflow-y-auto bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
               <SummarySection />
@@ -412,6 +492,9 @@ export default function ProjectPage() {
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
+
+      {/* Resizing overlay */}
+      {isResizing && <div className="fixed inset-0 z-50 cursor-ew-resize" />}
     </div>
   )
 }
