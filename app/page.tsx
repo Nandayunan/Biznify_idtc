@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 // import { ScrollArea } from "@/components/ui/scroll-area"
 // import { ScrollArea } from "@/components/ui/scroll-area";
-import { authClient } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
 import { User } from "lucide-react";
 import { LogOut } from "lucide-react";
 import {
@@ -302,7 +302,7 @@ export default function BusinessConsultingChat() {
     setMessageCount(userMessages.length);
 
     // Show subscription modal after 5th message for free users
-    if (subscriptionPlan === "free" && userMessages.length === 5) {
+    if (subscriptionPlan === "free" && userMessages.length === 20) {
       setShowSubscriptionModal(true);
     }
 
@@ -357,7 +357,7 @@ export default function BusinessConsultingChat() {
 
   const handleSuggestedQuestion = (question: string) => {
     // Allow up to 5 questions for free users
-    if (subscriptionPlan === "free" && messageCount >= 5) {
+    if (subscriptionPlan === "free" && messageCount >= 20) {
       setShowSubscriptionModal(true);
       return;
     }
@@ -366,7 +366,7 @@ export default function BusinessConsultingChat() {
 
   const handleAreaClick = (area: string) => {
     // Allow up to 5 questions for free users
-    if (subscriptionPlan === "free" && messageCount >= 5) {
+    if (subscriptionPlan === "free" && messageCount >= 20) {
       setShowSubscriptionModal(true);
       return;
     }
@@ -437,6 +437,7 @@ export default function BusinessConsultingChat() {
     setShowConclusionButton(false);
     setSidebarOpen(false);
     setMessageCount(0);
+    router.push("/");
   };
 
   const deletePrompt = (promptId: string, e: React.MouseEvent) => {
@@ -450,7 +451,7 @@ export default function BusinessConsultingChat() {
 
   const reusePrompt = (prompt: UserPrompt) => {
     // Allow up to 5 questions for free users
-    if (subscriptionPlan === "free" && messageCount >= 5) {
+    if (subscriptionPlan === "free" && messageCount >= 20) {
       setShowSubscriptionModal(true);
       return;
     }
@@ -473,6 +474,8 @@ export default function BusinessConsultingChat() {
       ? text.substring(0, maxLength) + "..."
       : text;
   };
+
+  const { data: session, isPending } = useSession();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
@@ -543,7 +546,7 @@ export default function BusinessConsultingChat() {
                 ) : messageCount >= 5 ? (
                   <>Limit Reached</>
                 ) : (
-                  <>Free ({5 - messageCount} remaining)</>
+                  <>Free ({20 - messageCount} remaining)</>
                 )}
               </Badge>
               {subscriptionPlan === "free" && (
@@ -805,10 +808,10 @@ export default function BusinessConsultingChat() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-medium truncate">
-                    {"User Name"}
+                    {session?.user?.name || "User Name"}
                   </p>
                   <p className="text-slate-400 text-xs truncate">
-                    {"user@example.com"}
+                    {session?.user?.email || "user@example.com"}
                   </p>
                 </div>
               </div>
