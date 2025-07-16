@@ -12,20 +12,27 @@ import {
 import { useChatContext } from "@/app/chat-context";
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function ChatConversation() {
-  const { messages, append, status } = useChatContext();
+  const { messages, append } = useChatContext();
 
   return (
-    <AIConversation className="relative size-full rounded-lg border">
-      <AIConversationContent>
+    <AIConversation className="relative size-full rounded-xl border-white/10 bg-white/5 backdrop-blur-sm">
+      <AIConversationContent className="p-4 space-y-4">
         {messages.map((message) => (
           <AIMessage
             from={message.role === "user" ? "user" : "assistant"}
             key={message.id}
           >
-            <AIMessageContent>
-              {status === "submitted" && <>Loading...</>}
+            <AIMessageContent
+              className={cn(
+                "backdrop-blur-sm border rounded-xl p-4 shadow-lg text-white",
+                message.role === "user"
+                  ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-400/30"
+                  : "bg-white/10 border-white/20"
+              )}
+            >
               {message.parts.map((part, index) => {
                 if (part.type === "step-start") {
                   return null;
@@ -34,7 +41,9 @@ export default function ChatConversation() {
                 if (part.type === "text") {
                   return (
                     <React.Fragment key={`${message.id}-${index}`}>
-                      {part.text}
+                      <div className="text-white/90 whitespace-pre-wrap">
+                        {part.text}
+                      </div>
                     </React.Fragment>
                   );
                 }
@@ -45,8 +54,8 @@ export default function ChatConversation() {
                     part.toolInvocation.state === "result"
                   ) {
                     return (
-                      <div key={`${message.id}-${index}`}>
-                        <p className="text-sm font-medium">
+                      <div key={`${message.id}-${index}`} className="space-y-3 mt-4">
+                        <p className="text-sm font-medium text-white bg-white/10 rounded-lg p-3 border border-white/20">
                           {part.toolInvocation.args.question}
                         </p>
                         <div className="flex flex-col gap-2">
@@ -54,7 +63,7 @@ export default function ChatConversation() {
                             (option: string) => (
                               <Button
                                 key={`${message.id}-${index}-${option}`}
-                                className="w-full flex-wrap p-2"
+                                className="w-full flex-wrap bg-white/15 hover:bg-white/25 text-white border border-white/30 hover:border-white/40 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg"
                                 variant="outline"
                                 onClick={() => {
                                   append({
@@ -75,7 +84,9 @@ export default function ChatConversation() {
 
                 return (
                   <React.Fragment key={`${message.id}-${index}`}>
-                    {JSON.stringify(part, null, 2)}
+                    <div className="bg-white/10 rounded-lg p-3 border border-white/20 text-white/80 font-mono text-sm">
+                      {JSON.stringify(part, null, 2)}
+                    </div>
                   </React.Fragment>
                 );
               })}

@@ -8,14 +8,18 @@ export default function SummarySection() {
 
   if (!conclusions || conclusions.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full">
-        Sedang menganalisa...
+      <div className="flex items-center justify-center h-full p-8">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg">Sedang menganalisa...</p>
+          <p className="text-slate-400 text-sm mt-2">AI sedang memproses data bisnis Anda</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 p-6">
       {conclusions.map((conclusion, index) => (
         <MarkdownSummary
           key={index}
