@@ -2,9 +2,10 @@
 
 import { useChatContext } from "@/app/chat-context";
 import MarkdownSummary from "./mardown-summary";
+import KeyInsight from "./key-insight";
 
 export default function SummarySection() {
-  const { conclusions } = useChatContext();
+  const { conclusions, keyInsights } = useChatContext();
 
   if (!conclusions || conclusions.length === 0) {
     return (
@@ -12,7 +13,9 @@ export default function SummarySection() {
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white text-lg">Sedang menganalisa...</p>
-          <p className="text-slate-400 text-sm mt-2">AI sedang memproses data bisnis Anda</p>
+          <p className="text-slate-400 text-sm mt-2">
+            AI sedang memproses data bisnis Anda
+          </p>
         </div>
       </div>
     );
@@ -29,6 +32,10 @@ export default function SummarySection() {
           defaultExpanded={true}
         />
       ))}
+
+      {keyInsights && keyInsights.length > 0 && (
+        <KeyInsight keyInsights={keyInsights} />
+      )}
     </div>
   );
 }

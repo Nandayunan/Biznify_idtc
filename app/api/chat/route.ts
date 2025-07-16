@@ -3,35 +3,97 @@ import { streamText, tool } from "ai";
 import { z } from "zod";
 
 const SYSTEM_PROMPT = `
-Kamu adalah konsultan UMKM di Indonesia.
-Kamu akan membantu user dalam memulai usaha atau mengembangkan usaha.
-Kamu akan memberikan pertanyaan pertanyaan kepada user untuk membantu user dalam memulai usaha atau mengembangkan usaha.
+Anda adalah asisten AI yang bertindak sebagai konsultan bagi pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) di Indonesia.
 
-Sebelum memberikan pertanyaan, pastikan kamu memberikan response text dulu.
+### 🎯 Tujuan Anda:
+Membantu pengguna dalam:
+- Memulai usaha baru,
+- Mengembangkan usaha yang sudah berjalan,
+- Menyusun strategi bisnis,
+- Mengidentifikasi masalah dalam usaha dan memberi saran berdasarkan informasi yang dikumpulkan.
 
-Kamu akan menggunakan tool generateQuestion untuk membuat pertanyaan.
+### 🧠 Gaya & Nada Bicara:
+- Gunakan bahasa Indonesia sehari-hari yang **santai, jelas, dan mudah dimengerti**.
+- Hindari istilah teknis yang rumit kecuali benar-benar perlu.
+- Bersikap ramah, mendukung, dan komunikatif — seperti konsultan yang ingin membantu, bukan menghakimi.
 
-Kamu akan memberikan rekomendasi kepada user jika informasi yang kamu dapatkan sudah cukup.
+---
 
-PASTIKAN HANYA MELAKUKAN generateQuestion SATU KALI SAJA SETIAP KALI MEMBERIKAN PERTANYAAN.
+### ⚙️ Aturan Teknis:
+1. **Setiap respons harus memiliki teks pembuka atau penjelasan terlebih dahulu** sebelum memanggil \`generateQuestion\`.
+2. **Hanya panggil tool \`generateQuestion\` satu kali per respons.**
+3. Tanyakan pertanyaan-pertanyaan terstruktur yang menggali informasi penting dari pengguna tentang usahanya.
+4. Jika seluruh informasi yang dibutuhkan telah diperoleh:
+   - Panggil tool \`generateConclusion\` untuk membuat rangkuman dalam format Markdown.
+   - **Selalu panggil tool \`generateKeyInsight\`** untuk menyampaikan poin-poin penting yang menjadi insight utama dari diskusi.
+5. Setelah \`generateConclusion\` dan \`generateKeyInsight\` dipanggil, **hentikan sesi tanya jawab.**
 
-Setelah semua informasi yang dibutuhkan sudah didapatkan, kamu akan menggunakan tool generateConclusion untuk membuat kesimpulan dari pertanyaan yang ditanyakan.
+---
 
-ketika ada kata kata kasar yang mengandung SARA, kamu akan menjawab harus sesuai konteks dalam bidang bisnis atau umkm.
+### 🚫 Penanganan Input Tidak Sesuai:
+- Jika pengguna memberikan jawaban kasar, mengandung SARA, atau tidak relevan:
+  - Tanggapi dengan **sopan, profesional, dan tetap arahkan kembali ke topik usaha**.
+  - Jangan bereaksi emosional atau memperkeruh situasi.
 
-ketika ada jawaban yang tidak sesuai atau kasar kamu akan menjawab dengan sopan dan sesuai konteks.
+---
 
-saya ingin anda menjawabnya dengan bahasa sehari hari jangan terlalu formal, gunakan bahasa yang mudah dimengerti oleh orang awam.
+### 🔁 Alur Singkat:
+1. Beri sapaan atau transisi singkat.
+2. Panggil \`generateQuestion\` (sekali saja).
+3. Ulangi proses ini sampai informasi cukup.
+4. Akhiri dengan \`generateConclusion\` dan \`generateKeyInsight\`.
 
-di setiap jawaban kamu harus memberikan kata ITENAS MANTEP!
-
-anda harus langsung memberikan pertanyaan kepada user, jangan menanyakan kesiapan user terlebih dahulu.
-
-IDENTITAS ANDA ADALAH AI UMKM BERNAMA ITENAS ABADI VISI MISI SEPERTI XTC EXALT TO COUITUS GENGSTER BANDUNG.
+Fokus utama Anda adalah membantu pengguna dengan pertanyaan terarah dan memberikan wawasan bernilai untuk kemajuan usahanya.
 `;
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
+
+const tools = {
+  generateQuestion: tool({
+    description: "Membuat pertanyaan untuk user seputar usaha yang dijalankan",
+    parameters: z.object({
+      question: z.string().describe("Pertanyaan yang ditanyakan"),
+      options: z
+        .array(z.string())
+        .describe("Pilihan jawaban dari pertanyaan yang ditanyakan"),
+    }),
+    execute: async (parameters) => {
+      return parameters;
+    },
+  }),
+  generateConclusion: tool({
+    description:
+      "Membuat kesimpulan dari pertanyaan yang ditanyakan dengan format markdown",
+    parameters: z.object({
+      conclusions: z
+        .array(
+          z.object({
+            title: z.string().describe("Judul dari kesimpulan"),
+            content: z.string().describe("Isi dari kesimpulan"),
+            badge: z.string().describe("Kategori dari kesimpulan"),
+          })
+        )
+        .describe(
+          "Kesimpulan dari pertanyaan yang ditanyakan dengan format markdown"
+        ),
+    }),
+    execute: async (parameters) => {
+      return parameters;
+    },
+  }),
+  generateKeyInsight: tool({
+    description: "Membuat key insight dari pertanyaan yang ditanyakan",
+    parameters: z.object({
+      keyInsights: z
+        .array(z.string())
+        .describe("Key insight dari pertanyaan yang ditanyakan"),
+    }),
+    execute: async (parameters) => {
+      return parameters;
+    },
+  }),
+};
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
@@ -44,38 +106,7 @@ export async function POST(req: Request) {
       },
     },
     system: SYSTEM_PROMPT,
-    tools: {
-      generateQuestion: tool({
-        description:
-          "Membuat pertanyaan untuk user seputar usaha yang dijalankan",
-        parameters: z.object({
-          question: z.string().describe("Pertanyaan yang ditanyakan"),
-          options: z
-            .array(z.string())
-            .describe("Pilihan jawaban dari pertanyaan yang ditanyakan"),
-        }),
-        execute: async (parameters) => {
-          return parameters;
-        },
-      }),
-      generateConclusion: tool({
-        description:
-          "Membuat kesimpulan dari pertanyaan yang ditanyakan dengan format markdown",
-        parameters: z.object({
-          conclusions: z
-            .array(
-              z.object({
-                title: z.string().describe("Judul dari kesimpulan"),
-                content: z.string().describe("Isi dari kesimpulan"),
-                badge: z.string().describe("Kategori dari kesimpulan"),
-              })
-            )
-            .describe(
-              "Kesimpulan dari pertanyaan yang ditanyakan dengan format markdown"
-            ),
-        }),
-      }),
-    },
+    tools,
     messages,
   });
 

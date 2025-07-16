@@ -13,6 +13,7 @@ import { useChatContext } from "@/app/chat-context";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { FileText, Lightbulb } from "lucide-react";
 
 export default function ChatConversation() {
   const { messages, append } = useChatContext();
@@ -54,7 +55,10 @@ export default function ChatConversation() {
                     part.toolInvocation.state === "result"
                   ) {
                     return (
-                      <div key={`${message.id}-${index}`} className="space-y-3 mt-4">
+                      <div
+                        key={`${message.id}-${index}`}
+                        className="space-y-3 mt-4"
+                      >
                         <p className="text-sm font-medium text-white bg-white/10 rounded-lg p-3 border border-white/20">
                           {part.toolInvocation.args.question}
                         </p>
@@ -76,6 +80,32 @@ export default function ChatConversation() {
                               </Button>
                             )
                           )}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (part.toolInvocation.toolName === "generateConclusion") {
+                    return (
+                      <div key={`${message.id}-${index}`}>
+                        <div className="flex items-center gap-2 mt-1">
+                          <FileText className="h-5 w-5 text-white" />
+                          <span className="text-sm font-semibold text-white">
+                            Membuat kesimpulan
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (part.toolInvocation.toolName === "generateKeyInsight") {
+                    return (
+                      <div key={`${message.id}-${index}`}>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Lightbulb className="h-5 w-5 text-white" />
+                          <span className="text-sm font-semibold text-white">
+                            Membuat key insight
+                          </span>
                         </div>
                       </div>
                     );

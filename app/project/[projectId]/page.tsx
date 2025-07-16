@@ -24,6 +24,7 @@ export default function ProjectPage() {
     },
     {
       enabled: !!projectId,
+      refetchOnWindowFocus: false,
     }
   );
 
