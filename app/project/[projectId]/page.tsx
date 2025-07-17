@@ -1,79 +1,67 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useParams } from "next/navigation"
-import ChatConversation from "./chat-conversation"
-import ChatInput from "./chat-input"
-import SummarySection from "./summary-section"
-import { trpc } from "@/lib/trpc"
-import { useChatContext } from "@/app/chat-context"
-import { useState, useEffect, useCallback, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { User, Bot, Crown, History, X, MessageSquare, Clock, Trash2, Menu } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import type { UIMessage } from "ai"
-import { useRouter } from "next/navigation"
-import { authClient, useSession } from "@/lib/auth-client"
-import { LogOut } from "lucide-react"
-import Swal from "sweetalert2"
+import type React from "react";
+import { useParams } from "next/navigation";
+import ChatConversation from "./chat-conversation";
+import ChatInput from "./chat-input";
+import SummarySection from "./summary-section";
+import { trpc } from "@/lib/trpc";
+import { useChatContext } from "@/app/chat-context";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  User,
+  Bot,
+  Crown,
+  History,
+  X,
+  MessageSquare,
+  Clock,
+  Trash2,
+  Menu,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
+import { authClient, useSession } from "@/lib/auth-client";
+import { LogOut } from "lucide-react";
+import Swal from "sweetalert2";
 
 interface UserPrompt {
-  id: string
-  content: string
-  timestamp: Date
-  sessionId: string
-}
-
-interface SavedChatSession {
-  id: string
-  title: string
-  timestamp: string
-  messages: UIMessage[]
-}
-
-interface SavedUserPrompt {
-  id: string
-  content: string
-  timestamp: string
-  sessionId: string
-}
-
-interface ChatSession {
-  id: string
-  title: string
-  timestamp: Date
-  messages: UIMessage[]
+  id: string;
+  content: string;
+  timestamp: Date;
+  sessionId: string;
 }
 
 interface MockEvent {
-  preventDefault?: () => void
+  preventDefault?: () => void;
 }
 
 export default function ProjectPage() {
-  const params = useParams()
-  const projectId = params?.projectId as string | undefined
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [subscriptionPlan, setSubscriptionPlan] = useState<"free" | "premium">("free")
-  const [messageCount, setMessageCount] = useState(0)
-  const { append } = useChatContext()
-  const { messages, handleSubmit, setMessages } = useChatContext()
-  const [selectedArea, setSelectedArea] = useState<string | null>(null)
-  const [showConclusionButton, setShowConclusionButton] = useState(false)
-  const [chatHistory, setChatHistory] = useState<ChatSession[]>([])
-  const [promptHistory, setPromptHistory] = useState<UserPrompt[]>([])
-  const [currentSessionId, setCurrentSessionId] = useState<string>("")
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
+  const params = useParams();
+  const projectId = params?.projectId as string | undefined;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [subscriptionPlan] = useState<"free" | "premium">("free");
+  const [messageCount, setMessageCount] = useState(0);
+  const { append } = useChatContext();
+  const { handleSubmit, setMessages } = useChatContext();
+  const [promptHistory, setPromptHistory] = useState<UserPrompt[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string>("");
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+
+  void currentSessionId;
+  void showSubscriptionModal;
 
   // Resizable panel states
-  const [summaryWidth, setSummaryWidth] = useState(400) // Default width in pixels
-  const [isResizing, setIsResizing] = useState(false)
-  const [startX, setStartX] = useState(0)
-  const [startWidth, setStartWidth] = useState(0)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [summaryWidth, setSummaryWidth] = useState(1350); // Default width in pixels
+  const [isResizing, setIsResizing] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [startWidth, setStartWidth] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Min and max widths for summary section
-  const MIN_SUMMARY_WIDTH = 300
-  const MAX_SUMMARY_WIDTH = 800
+  const MIN_SUMMARY_WIDTH = 300;
+  const MAX_SUMMARY_WIDTH = 1350;
 
   const {
     data: project,
@@ -86,98 +74,102 @@ export default function ProjectPage() {
     {
       enabled: !!projectId,
       refetchOnWindowFocus: false,
-    },
-  )
+    }
+  );
 
-  const router = useRouter()
+  const router = useRouter();
 
   // Resizing handlers
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      e.preventDefault()
-      setIsResizing(true)
-      setStartX(e.clientX)
-      setStartWidth(summaryWidth)
+      e.preventDefault();
+      setIsResizing(true);
+      setStartX(e.clientX);
+      setStartWidth(summaryWidth);
     },
-    [summaryWidth],
-  )
+    [summaryWidth]
+  );
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!isResizing) return
+      if (!isResizing) return;
 
-      const deltaX = startX - e.clientX // Reversed because we're resizing from the left
-      const newWidth = Math.min(Math.max(startWidth + deltaX, MIN_SUMMARY_WIDTH), MAX_SUMMARY_WIDTH)
-      setSummaryWidth(newWidth)
+      const deltaX = startX - e.clientX; // Reversed because we're resizing from the left
+      const newWidth = Math.min(
+        Math.max(startWidth + deltaX, MIN_SUMMARY_WIDTH),
+        MAX_SUMMARY_WIDTH
+      );
+      setSummaryWidth(newWidth);
     },
-    [isResizing, startX, startWidth],
-  )
+    [isResizing, startX, startWidth]
+  );
 
   const handleMouseUp = useCallback(() => {
-    setIsResizing(false)
-  }, [])
+    setIsResizing(false);
+  }, []);
 
   // Add event listeners for mouse move and up
   useEffect(() => {
     if (isResizing) {
-      document.addEventListener("mousemove", handleMouseMove)
-      document.addEventListener("mouseup", handleMouseUp)
-      document.body.style.cursor = "ew-resize"
-      document.body.style.userSelect = "none"
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "ew-resize";
+      document.body.style.userSelect = "none";
     } else {
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
-      document.body.style.cursor = ""
-      document.body.style.userSelect = ""
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     }
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
-      document.body.style.cursor = ""
-      document.body.style.userSelect = ""
-    }
-  }, [isResizing, handleMouseMove, handleMouseUp])
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizing, handleMouseMove, handleMouseUp]);
 
   const startNewChat = () => {
-    setMessages([])
-    setCurrentSessionId(Date.now().toString())
-    setShowConclusionButton(false)
-    setSidebarOpen(false)
-    setMessageCount(0)
-    router.push("/")
-  }
+    setMessages([]);
+    setCurrentSessionId(Date.now().toString());
+    setSidebarOpen(false);
+    setMessageCount(0);
+    router.push("/");
+  };
 
   const reusePrompt = (prompt: UserPrompt) => {
     if (subscriptionPlan === "free" && messageCount >= 20) {
-      setShowSubscriptionModal(true)
-      return
+      setShowSubscriptionModal(true);
+      return;
     }
-    handleSubmit({} as MockEvent, { data: { message: prompt.content } })
-    setSidebarOpen(false)
-  }
+    handleSubmit({} as MockEvent, { data: { message: prompt.content } });
+    setSidebarOpen(false);
+  };
 
   const formatTimestamp = (date: Date) => {
-    const now = new Date()
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-    if (diffInHours < 1) return "Just now"
-    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`
-    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`
-    return date.toLocaleDateString()
-  }
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    if (diffInHours < 1) return "Just now";
+    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`;
+    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
+    return date.toLocaleDateString();
+  };
 
   const truncateText = (text: string, maxLength: number) => {
-    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text
-  }
+    return text.length > maxLength
+      ? text.substring(0, maxLength) + "..."
+      : text;
+  };
 
   const deletePrompt = (promptId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+    e.stopPropagation();
     setPromptHistory((prev) => {
-      const updated = prev.filter((prompt) => prompt.id !== promptId)
-      localStorage.setItem("promptHistory", JSON.stringify(updated))
-      return updated
-    })
-  }
+      const updated = prev.filter((prompt) => prompt.id !== promptId);
+      localStorage.setItem("promptHistory", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   const handleLogout = async () => {
     await authClient.signOut({
@@ -191,27 +183,27 @@ export default function ProjectPage() {
             customClass: {
               popup: "border border-purple-500/20",
             },
-          })
+          });
           setTimeout(() => {
-            Swal.close()
-            router.push("/login")
-          }, 2000)
+            Swal.close();
+            router.push("/login");
+          }, 2000);
         },
       },
-    })
-  }
+    });
+  };
 
-  const { data: session, isPending } = useSession()
+  const { data: session } = useSession();
 
   useEffect(() => {
     if (project) {
       append({
         role: "user",
         content: project.title,
-      })
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project])
+  }, [project]);
 
   if (isLoading) {
     return (
@@ -221,7 +213,7 @@ export default function ProjectPage() {
           <p>Loading project...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (isError) {
@@ -231,7 +223,7 @@ export default function ProjectPage() {
           <p>Error loading project</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!project) {
@@ -241,7 +233,7 @@ export default function ProjectPage() {
           <p>Project not found</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -290,7 +282,9 @@ export default function ProjectPage() {
           <div className="flex items-center gap-2 flex-shrink-0 justify-end w-auto">
             <Badge
               className={`${
-                subscriptionPlan === "premium" ? "bg-gradient-to-r from-purple-500 to-pink-500" : "bg-slate-600"
+                subscriptionPlan === "premium"
+                  ? "bg-gradient-to-r from-purple-500 to-pink-500"
+                  : "bg-slate-600"
               } text-white border-0 px-2 md:px-3 py-1 text-xs`}
             >
               {subscriptionPlan === "premium" ? (
@@ -302,7 +296,8 @@ export default function ProjectPage() {
                 <>Limit</>
               ) : (
                 <>
-                  <span className="hidden sm:inline">Free </span>({20 - messageCount})
+                  <span className="hidden sm:inline">Free </span>(
+                  {20 - messageCount})
                 </>
               )}
             </Badge>
@@ -332,7 +327,7 @@ export default function ProjectPage() {
           sidebarOpen ? "lg:ml-64 lg:sm:ml-80" : "ml-0"
         }`}
       >
-        <div className="h-full p-4">
+        <div className="h-full p-4 mt-2">
           {/* Desktop Layout with Resizable Panels */}
           <div className="hidden lg:flex gap-4 h-full" ref={containerRef}>
             {/* Chat Section - Dynamic width */}
@@ -430,7 +425,9 @@ export default function ProjectPage() {
                 <div className="text-center py-8">
                   <History className="w-12 h-12 text-slate-500 mx-auto mb-3" />
                   <p className="text-slate-400 text-sm">No prompts yet</p>
-                  <p className="text-slate-500 text-xs">Your questions will appear here</p>
+                  <p className="text-slate-500 text-xs">
+                    Your questions will appear here
+                  </p>
                 </div>
               ) : (
                 promptHistory.map((prompt) => (
@@ -458,8 +455,12 @@ export default function ProjectPage() {
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
-                    <p className="text-white text-sm leading-relaxed">{truncateText(prompt.content, 120)}</p>
-                    <div className="mt-2 text-xs text-slate-500">Click to reuse this prompt</div>
+                    <p className="text-white text-sm leading-relaxed">
+                      {truncateText(prompt.content, 120)}
+                    </p>
+                    <div className="mt-2 text-xs text-slate-500">
+                      Click to reuse this prompt
+                    </div>
                   </div>
                 ))
               )}
@@ -473,8 +474,12 @@ export default function ProjectPage() {
                 <User className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-medium truncate">{session?.user?.name || "User Name"}</p>
-                <p className="text-slate-400 text-xs truncate">{session?.user?.email || "user@example.com"}</p>
+                <p className="text-white text-sm font-medium truncate">
+                  {session?.user?.name || "User Name"}
+                </p>
+                <p className="text-slate-400 text-xs truncate">
+                  {session?.user?.email || "user@example.com"}
+                </p>
               </div>
             </div>
             <Button
@@ -490,11 +495,14 @@ export default function ProjectPage() {
 
       {/* Sidebar Overlay untuk mobile */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       {/* Resizing overlay */}
       {isResizing && <div className="fixed inset-0 z-50 cursor-ew-resize" />}
     </div>
-  )
+  );
 }

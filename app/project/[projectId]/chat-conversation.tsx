@@ -13,7 +13,7 @@ import { useChatContext } from "@/app/chat-context";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { FileText, Lightbulb } from "lucide-react";
+import { AlertTriangle, FileText, Lightbulb, Star } from "lucide-react";
 
 export default function ChatConversation() {
   const { messages, append } = useChatContext();
@@ -105,6 +105,47 @@ export default function ChatConversation() {
                           <Lightbulb className="h-5 w-5 text-white" />
                           <span className="text-sm font-semibold text-white">
                             Membuat key insight
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (
+                    part.toolInvocation.toolName === "generateRecommendation"
+                  ) {
+                    return (
+                      <div key={`${message.id}-${index}`}>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Lightbulb className="h-5 w-5 text-white" />
+                          <span className="text-sm font-semibold text-white">
+                            Membuat rekomendasi
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (part.toolInvocation.toolName === "generateProblems") {
+                    return (
+                      <div key={`${message.id}-${index}`}>
+                        <div className="flex items-center gap-2 mt-1">
+                          <AlertTriangle className="h-5 w-5 text-white" />
+                          <span className="text-sm font-semibold text-white">
+                            Membuat tantangan
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (part.toolInvocation.toolName === "generateQuickStats") {
+                    return (
+                      <div key={`${message.id}-${index}`}>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Star className="h-5 w-5 text-white" />
+                          <span className="text-sm font-semibold text-white">
+                            Membuat statistik cepat
                           </span>
                         </div>
                       </div>
