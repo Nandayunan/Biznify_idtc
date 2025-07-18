@@ -1,13 +1,13 @@
-"use client"
-/* eslint-disable @typescript-eslint/no-namespace */
-import React from "react"
-import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { authClient, useSession } from "@/lib/auth-client"
-import { User } from "lucide-react"
-import { LogOut } from "lucide-react"
+"use client";
+
+import React from "react";
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { authClient, useSession } from "@/lib/auth-client";
+import { User } from "lucide-react";
+import { LogOut } from "lucide-react";
 import {
   Bot,
   Sparkles,
@@ -23,66 +23,54 @@ import {
   Crown,
   Check,
   Zap,
-  Loader2
-} from "lucide-react"
-import ChatInput from "./chat-input"
-import ChatMessages from "./chat-messages"
-import { useChatContext } from "./chat-context"
-import { useRouter } from "next/navigation"
-import Swal from "sweetalert2"
+  Loader2,
+} from "lucide-react";
+import ChatInput from "./chat-input";
+import ChatMessages from "./chat-messages";
+import { useChatContext } from "./chat-context";
+import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
+import BiznifyRobot from "@/components/biznify-robot";
 
-// Declare custom elements for TypeScript
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      "spline-viewer": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-        url?: string
-        "events-target"?: string
-        loading?: string
-      }
-    }
-  }
-}
-
-import type { UIMessage } from "ai"
+import type { UIMessage } from "ai";
 
 const suggestedQuestions = [
   "Bagaimana saya mengembangkan marketing saya?",
   "Apa cara terbaik untuk mengelola keuangan bisnis saya?",
   "Bagaimana cara meningkatkan produktivitas tim saya?",
   "apa strategi terbaik untuk meningkatkan penjualan?",
-]
+];
 
 interface UserPrompt {
-  id: string
-  content: string
-  timestamp: Date
-  sessionId: string
+  id: string;
+  content: string;
+  timestamp: Date;
+  sessionId: string;
 }
 
 interface SavedChatSession {
-  id: string
-  title: string
-  timestamp: string
-  messages: UIMessage[]
+  id: string;
+  title: string;
+  timestamp: string;
+  messages: UIMessage[];
 }
 
 interface SavedUserPrompt {
-  id: string
-  content: string
-  timestamp: string
-  sessionId: string
+  id: string;
+  content: string;
+  timestamp: string;
+  sessionId: string;
 }
 
 interface MockEvent {
-  preventDefault?: () => void
+  preventDefault?: () => void;
 }
 
 interface ChatSession {
-  id: string
-  title: string
-  timestamp: Date
-  messages: UIMessage[]
+  id: string;
+  title: string;
+  timestamp: Date;
+  messages: UIMessage[];
 }
 
 const businessAreas = [
@@ -98,275 +86,155 @@ const businessAreas = [
     color: "from-yellow-400 to-orange-400",
   },
   { icon: Users, label: "Management", color: "from-blue-400 to-indigo-400" },
-]
-
-// Custom hook untuk load Spline script
-const useSplineLoader = () => {
-  const [isLoaded, setIsLoaded] = useState(false)
-
-  useEffect(() => {
-    // Check if script already exists
-    const existingScript = document.querySelector('script[src*="spline-viewer"]')
-    if (existingScript) {
-      setIsLoaded(true)
-      return
-    }
-
-    // Create and load script
-    const script = document.createElement("script")
-    script.type = "module"
-    script.src = "https://unpkg.com/@splinetool/viewer@1.10.27/build/spline-viewer.js"
-    script.async = true
-    script.onload = () => {
-      setIsLoaded(true)
-    }
-    script.onerror = () => {
-      console.error("Failed to load Spline viewer")
-    }
-
-    document.head.appendChild(script)
-
-    return () => {
-      // Cleanup on unmount
-      const scriptToRemove = document.querySelector('script[src*="spline-viewer"]')
-      if (scriptToRemove) {
-        document.head.removeChild(scriptToRemove)
-      }
-    }
-  }, [])
-
-  return isLoaded
-}
-
-// Add TypeScript interface for SplineViewer props
-interface SplineViewerProps {
-  url: string
-  className?: string
-  sidebarOpen: boolean
-}
-
-interface SplineElement extends HTMLElement {
-  spline?: {
-    setZoom: (zoom: number) => void
-    emitEvent: (eventName: string) => void
-  }
-}
-
-// Spline Viewer Component - Updated with responsive positioning
-const SplineViewer: React.FC<SplineViewerProps> = ({ url, className = "", sidebarOpen }) => {
-  const isSplineLoaded = useSplineLoader()
-  const splineRef = useRef<SplineElement | null>(null)
-
-  useEffect(() => {
-    if (isSplineLoaded && splineRef.current) {
-      // Make sure the custom element is properly recognized
-      if (!customElements.get("spline-viewer")) {
-        // Wait a bit for the script to fully register the custom element
-        setTimeout(() => {
-          if (splineRef.current) {
-            splineRef.current.setAttribute("url", url)
-            // Add event listener untuk akses ke spline app setelah load
-            splineRef.current.addEventListener("load", () => {
-              try {
-                // Akses spline app untuk mengatur kamera
-                const splineApp = splineRef.current?.spline
-                if (splineApp) {
-                  // Reset kamera ke posisi default atau sesuai scene
-                  splineApp.setZoom(1)
-                  // Jika ada fungsi untuk reset kamera orientation
-                  if (splineApp.emitEvent) {
-                    splineApp.emitEvent("resetCamera")
-                  }
-                }
-              } catch (error) {
-                console.log("Spline camera adjustment not available:", error)
-              }
-            })
-          }
-        }, 100)
-      }
-    }
-  }, [isSplineLoaded, url])
-
-  if (!isSplineLoaded) {
-    return (
-      <div className={`flex items-center justify-center ${className}`}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/50"></div>
-      </div>
-    )
-  }
-
-  // Responsive transform based on sidebar state and screen size
-  const getTransform = () => {
-    if (typeof window !== "undefined") {
-      const isMobile = window.innerWidth < 768
-
-      if (isMobile) {
-        // Mobile: smaller size and centered
-        return "translate(0px, 50px) scale(0.6)"
-      } else {
-        // Desktop: adjust based on sidebar
-        const translateX = sidebarOpen ? "200px" : "90px"
-        return `translate(${translateX}, 100px) scale(1)`
-      }
-    }
-    return "translate(90px, 100px) scale(1)"
-  }
-
-  return React.createElement("spline-viewer", {
-    ref: splineRef,
-    url: url,
-    className: className,
-    style: {
-      width: "100%",
-      height: "100%",
-      display: "block",
-      transform: getTransform(),
-      transformOrigin: "center center",
-      transition: "transform 0.3s ease-in-out",
-    },
-    loading: "lazy",
-    "events-target": "global",
-  })
-}
+];
 
 export default function BusinessConsultingChat() {
-  const { messages, handleSubmit, setMessages } = useChatContext()
-  const [selectedArea, setSelectedArea] = useState<string | null>(null)
-  const [showConclusionButton, setShowConclusionButton] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [chatHistory, setChatHistory] = useState<ChatSession[]>([])
-  const [promptHistory, setPromptHistory] = useState<UserPrompt[]>([])
-  const [currentSessionId, setCurrentSessionId] = useState<string>("")
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
-  const [subscriptionPlan, setSubscriptionPlan] = useState<"free" | "premium">("free")
-  const [messageCount, setMessageCount] = useState(0)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const { messages, handleSubmit, setMessages } = useChatContext();
+  const [selectedArea, setSelectedArea] = useState<string | null>(null);
+  const [showConclusionButton, setShowConclusionButton] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [chatHistory, setChatHistory] = useState<ChatSession[]>([]);
+  const [promptHistory, setPromptHistory] = useState<UserPrompt[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string>("");
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<"free" | "premium">(
+    "free"
+  );
+  const [messageCount, setMessageCount] = useState(0);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  void chatHistory
-  void selectedArea
-  void showConclusionButton
+  void chatHistory;
+  void selectedArea;
+  void showConclusionButton;
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     // Load saved subscription plan
-    const savedPlan = localStorage.getItem("subscriptionPlan") as "free" | "premium" | null
+    const savedPlan = localStorage.getItem("subscriptionPlan") as
+      | "free"
+      | "premium"
+      | null;
     if (savedPlan) {
-      setSubscriptionPlan(savedPlan)
+      setSubscriptionPlan(savedPlan);
     }
 
     // Load chat history and prompt history from localStorage
-    const savedHistory = localStorage.getItem("chatHistory")
+    const savedHistory = localStorage.getItem("chatHistory");
     if (savedHistory) {
-      const parsed: SavedChatSession[] = JSON.parse(savedHistory)
+      const parsed: SavedChatSession[] = JSON.parse(savedHistory);
       setChatHistory(
         parsed.map((session) => ({
           ...session,
           timestamp: new Date(session.timestamp),
-        })),
-      )
+        }))
+      );
     }
 
-    const savedPrompts = localStorage.getItem("promptHistory")
+    const savedPrompts = localStorage.getItem("promptHistory");
     if (savedPrompts) {
-      const parsed: SavedUserPrompt[] = JSON.parse(savedPrompts)
+      const parsed: SavedUserPrompt[] = JSON.parse(savedPrompts);
       setPromptHistory(
         parsed.map((prompt) => ({
           ...prompt,
           timestamp: new Date(prompt.timestamp),
-        })),
-      )
+        }))
+      );
     }
 
     // Generate session ID if not exists
     if (!currentSessionId) {
-      setCurrentSessionId(Date.now().toString())
+      setCurrentSessionId(Date.now().toString());
     }
-  }, [currentSessionId])
+  }, [currentSessionId]);
 
   useEffect(() => {
     // Count user messages for free plan limit
-    const userMessages = messages.filter((m) => m.role === "user")
-    setMessageCount(userMessages.length)
+    const userMessages = messages.filter((m) => m.role === "user");
+    setMessageCount(userMessages.length);
 
     // Show subscription modal after more than 2 messages for free users
     if (subscriptionPlan === "free" && userMessages.length > 2) {
-      setShowSubscriptionModal(true)
+      setShowSubscriptionModal(true);
     }
 
     // Show conclusion button after 3+ meaningful exchanges
-    const meaningfulMessages = messages.filter((m) => m.content.length > 50)
+    const meaningfulMessages = messages.filter((m) => m.content.length > 50);
     if (meaningfulMessages.length >= 4) {
-      setShowConclusionButton(true)
+      setShowConclusionButton(true);
     }
-  }, [messages, subscriptionPlan])
+  }, [messages, subscriptionPlan]);
 
   useEffect(() => {
     // Save current session to history when messages change
     if (messages.length > 0 && currentSessionId) {
-      const sessionTitle = messages[0]?.content.substring(0, 50) + "..." || "New Chat"
+      const sessionTitle =
+        messages[0]?.content.substring(0, 50) + "..." || "New Chat";
       const currentSession: ChatSession = {
         id: currentSessionId,
         title: sessionTitle,
         timestamp: new Date(),
         messages: messages,
-      }
+      };
 
       setChatHistory((prev) => {
-        const filtered = prev.filter((session) => session.id !== currentSessionId)
-        const updated = [currentSession, ...filtered].slice(0, 20) // Keep last 20 sessions
-        localStorage.setItem("chatHistory", JSON.stringify(updated))
-        return updated
-      })
+        const filtered = prev.filter(
+          (session) => session.id !== currentSessionId
+        );
+        const updated = [currentSession, ...filtered].slice(0, 20); // Keep last 20 sessions
+        localStorage.setItem("chatHistory", JSON.stringify(updated));
+        return updated;
+      });
 
       // Extract and save user prompts
-      const userMessages = messages.filter((m) => m.role === "user")
+      const userMessages = messages.filter((m) => m.role === "user");
       const newPrompts: UserPrompt[] = userMessages.map((msg) => ({
         id: msg.id,
         content: msg.content,
         timestamp: new Date(),
         sessionId: currentSessionId,
-      }))
+      }));
 
       setPromptHistory((prev) => {
         // Remove existing prompts from current session and add new ones
-        const filtered = prev.filter((prompt) => prompt.sessionId !== currentSessionId)
-        const updated = [...newPrompts, ...filtered].slice(0, 50) // Keep last 50 prompts
-        localStorage.setItem("promptHistory", JSON.stringify(updated))
-        return updated
-      })
+        const filtered = prev.filter(
+          (prompt) => prompt.sessionId !== currentSessionId
+        );
+        const updated = [...newPrompts, ...filtered].slice(0, 50); // Keep last 50 prompts
+        localStorage.setItem("promptHistory", JSON.stringify(updated));
+        return updated;
+      });
     }
-  }, [messages, currentSessionId])
+  }, [messages, currentSessionId]);
 
   const handleSuggestedQuestion = (question: string) => {
     // Allow up to 2 questions for free users
     if (subscriptionPlan === "free" && messageCount >= 2) {
-      setShowSubscriptionModal(true)
-      return
+      setShowSubscriptionModal(true);
+      return;
     }
-    handleSubmit({} as MockEvent, { data: { message: question } })
-  }
+    handleSubmit({} as MockEvent, { data: { message: question } });
+  };
 
   const handleAreaClick = (area: string) => {
     // Allow up to 2 questions for free users
     if (subscriptionPlan === "free" && messageCount >= 2) {
-      setShowSubscriptionModal(true)
-      return
+      setShowSubscriptionModal(true);
+      return;
     }
-    setSelectedArea(area)
-    const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`
-    handleSubmit({} as MockEvent, { data: { message: areaPrompt } })
-  }
+    setSelectedArea(area);
+    const areaPrompt = `I need help with ${area.toLowerCase()} for my small business. Can you provide some initial guidance?`;
+    handleSubmit({} as MockEvent, { data: { message: areaPrompt } });
+  };
 
-  const router = useRouter()
+  const router = useRouter();
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -382,65 +250,67 @@ export default function BusinessConsultingChat() {
             customClass: {
               popup: "border border-purple-500/20",
             },
-          })
+          });
           setTimeout(() => {
-            Swal.close()
-            router.push("/login")
-          }, 2000)
+            Swal.close();
+            router.push("/login");
+          }, 2000);
         },
       },
-    })
-  }
+    });
+  };
 
   const handleSubscriptionChoice = (plan: "free" | "premium") => {
-    setSubscriptionPlan(plan)
-    localStorage.setItem("subscriptionPlan", plan)
-    localStorage.setItem("hasSeenSubscriptionModal", "true")
-    setShowSubscriptionModal(false)
-  }
+    setSubscriptionPlan(plan);
+    localStorage.setItem("subscriptionPlan", plan);
+    localStorage.setItem("hasSeenSubscriptionModal", "true");
+    setShowSubscriptionModal(false);
+  };
 
   const startNewChat = () => {
-    setMessages([])
-    setCurrentSessionId(Date.now().toString())
-    setShowConclusionButton(false)
-    setSidebarOpen(false)
-    setMessageCount(0)
-    router.push("/")
-  }
+    setMessages([]);
+    setCurrentSessionId(Date.now().toString());
+    setShowConclusionButton(false);
+    setSidebarOpen(false);
+    setMessageCount(0);
+    router.push("/");
+  };
 
   const deletePrompt = (promptId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+    e.stopPropagation();
     setPromptHistory((prev) => {
-      const updated = prev.filter((prompt) => prompt.id !== promptId)
-      localStorage.setItem("promptHistory", JSON.stringify(updated))
-      return updated
-    })
-  }
+      const updated = prev.filter((prompt) => prompt.id !== promptId);
+      localStorage.setItem("promptHistory", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   const reusePrompt = (prompt: UserPrompt) => {
     // Allow up to 2 questions for free users
     if (subscriptionPlan === "free" && messageCount >= 2) {
-      setShowSubscriptionModal(true)
-      return
+      setShowSubscriptionModal(true);
+      return;
     }
-    handleSubmit({} as MockEvent, { data: { message: prompt.content } })
-    setSidebarOpen(false)
-  }
+    handleSubmit({} as MockEvent, { data: { message: prompt.content } });
+    setSidebarOpen(false);
+  };
 
   const formatTimestamp = (date: Date) => {
-    const now = new Date()
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-    if (diffInHours < 1) return "Just now"
-    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`
-    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`
-    return date.toLocaleDateString()
-  }
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    if (diffInHours < 1) return "Just now";
+    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`;
+    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
+    return date.toLocaleDateString();
+  };
 
   const truncateText = (text: string, maxLength: number) => {
-    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text
-  }
+    return text.length > maxLength
+      ? text.substring(0, maxLength) + "..."
+      : text;
+  };
 
-  const { data: session } = useSession()
+  const { data: session } = useSession();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
@@ -453,18 +323,15 @@ export default function BusinessConsultingChat() {
 
       {/* 3D Spline Background - Responsive positioning */}
       <div className="absolute inset-0 z-0">
-        <SplineViewer
-          url="https://prod.spline.design/y0EnxvXrPRsZpMhP/scene.splinecode"
-          className="w-full px-0 py-8 opacity-30"
-          sidebarOpen={sidebarOpen}
-        />
+        <BiznifyRobot sidebarOpen={sidebarOpen} />
       </div>
 
       <div className="relative w-full px-0 pt-20 pb-8 min-h-screen">
         {/* Header - Responsive to sidebar */}
         <div
-          className={`fixed top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 transition-all duration-300 ${sidebarOpen ? "left-0 right-0 md:left-80" : "left-0 right-0"
-            }`}
+          className={`fixed top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 transition-all duration-300 ${
+            sidebarOpen ? "left-0 right-0 md:left-80" : "left-0 right-0"
+          }`}
         >
           <header className="w-full px-2 sm:px-4 py-3 flex items-center justify-between gap-2">
             {/* Sidebar Prompt Button - paling ujung kiri */}
@@ -504,8 +371,11 @@ export default function BusinessConsultingChat() {
             {/* Plan Badge & Upgrade Button - paling kanan */}
             <div className="flex items-center gap-2 flex-shrink-0 justify-end w-auto">
               <Badge
-                className={`${subscriptionPlan === "premium" ? "bg-gradient-to-r from-purple-500 to-pink-500" : "bg-slate-600"
-                  } text-white border-0 px-3 py-1`}
+                className={`${
+                  subscriptionPlan === "premium"
+                    ? "bg-gradient-to-r from-purple-500 to-pink-500"
+                    : "bg-slate-600"
+                } text-white border-0 px-3 py-1`}
               >
                 {subscriptionPlan === "premium" ? (
                   <>
@@ -550,8 +420,12 @@ export default function BusinessConsultingChat() {
                     <Crown className="w-8 h-8 text-white" />
                   </div>
                 </div>
-                <CardTitle className="text-3xl font-bold text-white mb-2">Choose Your Business Plan</CardTitle>
-                <p className="text-slate-300 text-lg">Get expert business consulting advice tailored to your needs</p>
+                <CardTitle className="text-3xl font-bold text-white mb-2">
+                  Choose Your Business Plan
+                </CardTitle>
+                <p className="text-slate-300 text-lg">
+                  Get expert business consulting advice tailored to your needs
+                </p>
               </CardHeader>
 
               <CardContent className="p-4 sm:p-8">
@@ -563,27 +437,39 @@ export default function BusinessConsultingChat() {
                         <div className="w-12 h-12 bg-gradient-to-r from-slate-500 to-slate-600 rounded-xl flex items-center justify-center mx-auto mb-4">
                           <Zap className="w-6 h-6 text-white" />
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">Free Access</h3>
-                        <div className="text-4xl font-bold text-white mb-1">Rp 0</div>
+                        <h3 className="text-2xl font-bold text-white mb-2">
+                          Free Access
+                        </h3>
+                        <div className="text-4xl font-bold text-white mb-1">
+                          Rp 0
+                        </div>
                         <p className="text-slate-400">Limited Access</p>
                       </div>
 
                       <div className="space-y-3 mb-8">
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-slate-200">20 questions per session</span>
+                          <span className="text-slate-200">
+                            20 questions per session
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-slate-200">Basic business advice</span>
+                          <span className="text-slate-200">
+                            Basic business advice
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <X className="w-5 h-5 text-slate-500 flex-shrink-0" />
-                          <span className="text-slate-400 line-through">Consultation summaries</span>
+                          <span className="text-slate-400 line-through">
+                            Consultation summaries
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <X className="w-5 h-5 text-slate-500 flex-shrink-0" />
-                          <span className="text-slate-400 line-through">Unlimited conversations</span>
+                          <span className="text-slate-400 line-through">
+                            Unlimited conversations
+                          </span>
                         </div>
                       </div>
 
@@ -609,31 +495,45 @@ export default function BusinessConsultingChat() {
                         <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                           <Crown className="w-6 h-6 text-white" />
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">Premium Access</h3>
-                        <div className="text-4xl font-bold text-white mb-1">Rp 50,000</div>
+                        <h3 className="text-2xl font-bold text-white mb-2">
+                          Premium Access
+                        </h3>
+                        <div className="text-4xl font-bold text-white mb-1">
+                          Rp 50,000
+                        </div>
                         <p className="text-purple-200">Unlimited Access</p>
                       </div>
 
                       <div className="space-y-3 mb-8">
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-white font-medium">Unlimited questions</span>
+                          <span className="text-white font-medium">
+                            Unlimited questions
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-white font-medium">Advanced business strategies</span>
+                          <span className="text-white font-medium">
+                            Advanced business strategies
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-white font-medium">Consultation summaries</span>
+                          <span className="text-white font-medium">
+                            Consultation summaries
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-white font-medium">Priority support</span>
+                          <span className="text-white font-medium">
+                            Priority support
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                          <span className="text-white font-medium">Export chat history</span>
+                          <span className="text-white font-medium">
+                            Export chat history
+                          </span>
                         </div>
                       </div>
 
@@ -648,7 +548,9 @@ export default function BusinessConsultingChat() {
                 </div>
 
                 <div className="text-center mt-4 sm:mt-8">
-                  <p className="text-slate-400 text-sm">You can upgrade or change your plan anytime in settings</p>
+                  <p className="text-slate-400 text-sm">
+                    You can upgrade or change your plan anytime in settings
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -657,8 +559,9 @@ export default function BusinessConsultingChat() {
 
         {/* Sidebar - Prompt History */}
         <div
-          className={`fixed inset-y-0 left-0 z-50 w-64 sm:w-80 bg-black/80 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
+          className={`fixed inset-y-0 left-0 z-50 w-64 sm:w-80 bg-black/80 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
         >
           <div className="flex flex-col h-full">
             {/* Sidebar Header */}
@@ -695,7 +598,9 @@ export default function BusinessConsultingChat() {
                   <div className="text-center py-8">
                     <History className="w-12 h-12 text-slate-500 mx-auto mb-3" />
                     <p className="text-slate-400 text-sm">No prompts yet</p>
-                    <p className="text-slate-500 text-xs">Your questions will appear here</p>
+                    <p className="text-slate-500 text-xs">
+                      Your questions will appear here
+                    </p>
                   </div>
                 ) : (
                   promptHistory.map((prompt) => (
@@ -723,8 +628,12 @@ export default function BusinessConsultingChat() {
                           <Trash2 className="w-3 h-3" />
                         </Button>
                       </div>
-                      <p className="text-white text-sm leading-relaxed">{truncateText(prompt.content, 120)}</p>
-                      <div className="mt-2 text-xs text-slate-500">Click to reuse this prompt</div>
+                      <p className="text-white text-sm leading-relaxed">
+                        {truncateText(prompt.content, 120)}
+                      </p>
+                      <div className="mt-2 text-xs text-slate-500">
+                        Click to reuse this prompt
+                      </div>
                     </div>
                   ))
                 )}
@@ -738,8 +647,12 @@ export default function BusinessConsultingChat() {
                   <User className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium truncate">{session?.user?.name || "User Name"}</p>
-                  <p className="text-slate-400 text-xs truncate">{session?.user?.email || "user@example.com"}</p>
+                  <p className="text-white text-sm font-medium truncate">
+                    {session?.user?.name || "User Name"}
+                  </p>
+                  <p className="text-slate-400 text-xs truncate">
+                    {session?.user?.email || "user@example.com"}
+                  </p>
                 </div>
               </div>
               <Button
@@ -773,16 +686,21 @@ export default function BusinessConsultingChat() {
         )}
 
         {/* Main Content - Adjusts based on sidebar state */}
-        <div className={`flex-1 relative z-10 transition-all duration-300 ${sidebarOpen ? "md:ml-80" : "ml-0"} pt-2`}>
+        <div
+          className={`flex-1 relative z-10 transition-all duration-300 ${
+            sidebarOpen ? "md:ml-80" : "ml-0"
+          } pt-2`}
+        >
           <div className="w-full px-0 py-8">
             {/* Content */}
             <div className="text-center mb-8">
               {messages.length === 0 && (
                 <>
                   <p className="text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed backdrop-blur-sm bg-black/20 rounded-lg p-4">
-                    Chatbot pintar berbasis AI yang dirancang khusus untuk membantu pelaku Usaha Mikro, Kecil, dan
-                    Menengah (UMKM) dalam mengembangkan strategi bisnis yang lebih efisien, tepat sasaran, dan
-                    berkelanjutan.
+                    Chatbot pintar berbasis AI yang dirancang khusus untuk
+                    membantu pelaku Usaha Mikro, Kecil, dan Menengah (UMKM)
+                    dalam mengembangkan strategi bisnis yang lebih efisien,
+                    tepat sasaran, dan berkelanjutan.
                   </p>
 
                   {/* Business Areas */}
@@ -800,7 +718,9 @@ export default function BusinessConsultingChat() {
                             >
                               <area.icon className="w-6 h-6 text-white" />
                             </div>
-                            <p className="text-white text-sm font-medium">{area.label}</p>
+                            <p className="text-white text-sm font-medium">
+                              {area.label}
+                            </p>
                           </CardContent>
                         </Card>
                       ))}
@@ -844,11 +764,13 @@ export default function BusinessConsultingChat() {
 
             {/* Footer */}
             <div className="text-center mt-6">
-              <p className="text-slate-500 text-xs">© {new Date().getFullYear()} | Biznify</p>
+              <p className="text-slate-500 text-xs">
+                © {new Date().getFullYear()} | Biznify
+              </p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
