@@ -60,7 +60,7 @@ export default function ProjectPage() {
       setShowSubscriptionModal(true);
       return;
     }
-    handleSubmit(event, data);
+    handleSubmit(event);
     setMessageCount((prev) => {
       const next = prev + 1;
       if (typeof window !== "undefined") {
