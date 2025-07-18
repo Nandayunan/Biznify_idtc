@@ -297,8 +297,8 @@ export default function BusinessConsultingChat() {
     const userMessages = messages.filter((m) => m.role === "user")
     setMessageCount(userMessages.length)
 
-    // Show subscription modal after 20th message for free users
-    if (subscriptionPlan === "free" && userMessages.length === 20) {
+    // Show subscription modal after more than 2 messages for free users
+    if (subscriptionPlan === "free" && userMessages.length > 2) {
       setShowSubscriptionModal(true)
     }
 
@@ -347,8 +347,8 @@ export default function BusinessConsultingChat() {
   }, [messages, currentSessionId])
 
   const handleSuggestedQuestion = (question: string) => {
-    // Allow up to 20 questions for free users
-    if (subscriptionPlan === "free" && messageCount >= 20) {
+    // Allow up to 2 questions for free users
+    if (subscriptionPlan === "free" && messageCount >= 2) {
       setShowSubscriptionModal(true)
       return
     }
@@ -356,8 +356,8 @@ export default function BusinessConsultingChat() {
   }
 
   const handleAreaClick = (area: string) => {
-    // Allow up to 20 questions for free users
-    if (subscriptionPlan === "free" && messageCount >= 20) {
+    // Allow up to 2 questions for free users
+    if (subscriptionPlan === "free" && messageCount >= 2) {
       setShowSubscriptionModal(true)
       return
     }
@@ -418,8 +418,8 @@ export default function BusinessConsultingChat() {
   }
 
   const reusePrompt = (prompt: UserPrompt) => {
-    // Allow up to 20 questions for free users
-    if (subscriptionPlan === "free" && messageCount >= 20) {
+    // Allow up to 2 questions for free users
+    if (subscriptionPlan === "free" && messageCount >= 2) {
       setShowSubscriptionModal(true)
       return
     }
@@ -463,9 +463,8 @@ export default function BusinessConsultingChat() {
       <div className="relative w-full px-0 pt-20 pb-8 min-h-screen">
         {/* Header - Responsive to sidebar */}
         <div
-          className={`fixed top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 transition-all duration-300 ${
-            sidebarOpen ? "left-0 right-0 md:left-80" : "left-0 right-0"
-          }`}
+          className={`fixed top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 transition-all duration-300 ${sidebarOpen ? "left-0 right-0 md:left-80" : "left-0 right-0"
+            }`}
         >
           <header className="w-full px-2 sm:px-4 py-3 flex items-center justify-between gap-2">
             {/* Sidebar Prompt Button - paling ujung kiri */}
@@ -505,19 +504,18 @@ export default function BusinessConsultingChat() {
             {/* Plan Badge & Upgrade Button - paling kanan */}
             <div className="flex items-center gap-2 flex-shrink-0 justify-end w-auto">
               <Badge
-                className={`${
-                  subscriptionPlan === "premium" ? "bg-gradient-to-r from-purple-500 to-pink-500" : "bg-slate-600"
-                } text-white border-0 px-3 py-1`}
+                className={`${subscriptionPlan === "premium" ? "bg-gradient-to-r from-purple-500 to-pink-500" : "bg-slate-600"
+                  } text-white border-0 px-3 py-1`}
               >
                 {subscriptionPlan === "premium" ? (
                   <>
                     <Crown className="w-3 h-3 mr-1" />
                     Premium
                   </>
-                ) : messageCount >= 20 ? (
+                ) : messageCount >= 2 ? (
                   <>Limit Reached</>
                 ) : (
-                  <>Free ({20 - messageCount} remaining)</>
+                  <>Free ({2 - messageCount} remaining)</>
                 )}
               </Badge>
               {subscriptionPlan === "free" && (
@@ -659,9 +657,8 @@ export default function BusinessConsultingChat() {
 
         {/* Sidebar - Prompt History */}
         <div
-          className={`fixed inset-y-0 left-0 z-50 w-64 sm:w-80 bg-black/80 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className={`fixed inset-y-0 left-0 z-50 w-64 sm:w-80 bg-black/80 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
         >
           <div className="flex flex-col h-full">
             {/* Sidebar Header */}
@@ -745,23 +742,23 @@ export default function BusinessConsultingChat() {
                   <p className="text-slate-400 text-xs truncate">{session?.user?.email || "user@example.com"}</p>
                 </div>
               </div>
-                <Button
-                  onClick={handleLogout}
-                  disabled={isLoading}
-                  className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/30 rounded-xl transition-all duration-300"
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Logging out...
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center">
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Logout
-                    </div>
-                  )}
-                </Button>
+              <Button
+                onClick={handleLogout}
+                disabled={isLoading}
+                className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/30 rounded-xl transition-all duration-300"
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Logging out...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </div>
+                )}
+              </Button>
             </div>
           </div>
         </div>

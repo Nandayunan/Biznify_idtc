@@ -8,7 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 
-export default function ChatInput() {
+
+interface ChatInputProps {
+  onPromptSubmit?: (event: React.FormEvent, data: { data: { message: string } }) => void;
+}
+
+export default function ChatInput(props: ChatInputProps) {
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<"idle" | "streaming">("idle");
   const router = useRouter();
@@ -21,6 +26,11 @@ export default function ChatInput() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
+    if (props.onPromptSubmit) {
+      props.onPromptSubmit(e, { data: { message: input } });
+      setInput("");
+      return;
+    }
     setStatus("streaming");
     try {
       const project = await createProject.mutateAsync({ title: input });
