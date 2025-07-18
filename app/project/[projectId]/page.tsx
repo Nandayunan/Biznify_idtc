@@ -57,7 +57,7 @@ export default function ProjectPage() {
     data: { data: { message: string } }
   ) => {
     void data;
-    if (subscriptionPlan === "free" && messageCount >= 2) {
+    if (subscriptionPlan === "free" && messageCount >= 20) {
       setShowSubscriptionModal(true);
       return;
     }
@@ -67,7 +67,7 @@ export default function ProjectPage() {
       if (typeof window !== "undefined") {
         localStorage.setItem("messageCount", next.toString());
       }
-      if (subscriptionPlan === "free" && next >= 2) {
+      if (subscriptionPlan === "free" && next >= 20) {
         setShowSubscriptionModal(true);
       }
       return next;
@@ -169,7 +169,7 @@ export default function ProjectPage() {
   };
 
   const reusePrompt = (prompt: UserPrompt) => {
-    if (subscriptionPlan === "free" && messageCount >= 2) {
+    if (subscriptionPlan === "free" && messageCount >= 20) {
       setShowSubscriptionModal(true);
       return;
     }
@@ -179,7 +179,7 @@ export default function ProjectPage() {
       if (typeof window !== "undefined") {
         localStorage.setItem("messageCount", next.toString());
       }
-      if (subscriptionPlan === "free" && next >= 2) {
+      if (subscriptionPlan === "free" && next >= 20) {
         setShowSubscriptionModal(true);
       }
       return next;
@@ -260,7 +260,7 @@ export default function ProjectPage() {
       const count = stored ? parseInt(stored, 10) : 0;
       setMessageCount(count);
       // Cek langsung jika sudah limit, agar modal muncul setelah reload
-      if (subscriptionPlan === "free" && count >= 2) {
+      if (subscriptionPlan === "free" && count >= 20) {
         setShowSubscriptionModal(true);
       }
     }
@@ -268,7 +268,7 @@ export default function ProjectPage() {
 
   // Show modal automatically if already over limit (e.g. after reload)
   useEffect(() => {
-    if (subscriptionPlan === "free" && messageCount >= 2) {
+    if (subscriptionPlan === "free" && messageCount >= 20) {
       setShowSubscriptionModal(true);
     }
   }, [messageCount, subscriptionPlan]);
@@ -357,10 +357,10 @@ export default function ProjectPage() {
                   <Crown className="w-3 h-3 mr-1" />
                   Premium
                 </>
-              ) : messageCount >= 2 ? (
+              ) : messageCount >= 20 ? (
                 <>Limit Reached</>
               ) : (
-                <>Free ({2 - messageCount} remaining)</>
+                <>Free ({20 - messageCount} remaining)</>
               )}
             </Badge>
             {subscriptionPlan === "free" && (
