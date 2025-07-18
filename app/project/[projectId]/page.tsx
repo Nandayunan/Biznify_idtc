@@ -56,6 +56,7 @@ export default function ProjectPage() {
     event: React.FormEvent,
     data: { data: { message: string } }
   ) => {
+    void data;
     if (subscriptionPlan === "free" && messageCount >= 20) {
       setShowSubscriptionModal(true);
       return;
