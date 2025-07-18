@@ -44,6 +44,8 @@ Membantu pengguna dalam:
 
 5. Setelah semua tools di atas dipanggil, **akhiri sesi dengan dukungan positif** (contoh: “Semoga usaha kamu sukses ya, aku siap bantu kapan pun!”)
 
+6. Jika pengguna meminta informasi lebih lanjut, ulangi langkah 1-5.
+
 ---
 
 **Penjelasan Singkat Masing-masing Tool:**

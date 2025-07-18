@@ -7,21 +7,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
-
+import { useChatContext } from "@/app/chat-context";
 
 interface ChatInputProps {
-  onPromptSubmit?: (event: React.FormEvent, data: { data: { message: string } }) => void;
+  onPromptSubmit?: (
+    event: React.FormEvent,
+    data: { data: { message: string } }
+  ) => void;
 }
 
 export default function ChatInput(props: ChatInputProps) {
-  const [input, setInput] = useState("");
+  const { input, setInput, handleInputChange } = useChatContext();
   const [status, setStatus] = useState<"idle" | "streaming">("idle");
   const router = useRouter();
   const createProject = trpc.project.create.useMutation();
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
