@@ -297,8 +297,8 @@ export default function BusinessConsultingChat() {
     const userMessages = messages.filter((m) => m.role === "user")
     setMessageCount(userMessages.length)
 
-    // Show subscription modal after 20th message for free users
-    if (subscriptionPlan === "free" && userMessages.length === 20) {
+    // Show subscription modal after more than 2 messages for free users
+    if (subscriptionPlan === "free" && userMessages.length > 2) {
       setShowSubscriptionModal(true)
     }
 
@@ -347,8 +347,8 @@ export default function BusinessConsultingChat() {
   }, [messages, currentSessionId])
 
   const handleSuggestedQuestion = (question: string) => {
-    // Allow up to 20 questions for free users
-    if (subscriptionPlan === "free" && messageCount >= 20) {
+    // Allow up to 2 questions for free users
+    if (subscriptionPlan === "free" && messageCount >= 2) {
       setShowSubscriptionModal(true)
       return
     }
@@ -356,8 +356,8 @@ export default function BusinessConsultingChat() {
   }
 
   const handleAreaClick = (area: string) => {
-    // Allow up to 20 questions for free users
-    if (subscriptionPlan === "free" && messageCount >= 20) {
+    // Allow up to 2 questions for free users
+    if (subscriptionPlan === "free" && messageCount >= 2) {
       setShowSubscriptionModal(true)
       return
     }
@@ -418,8 +418,8 @@ export default function BusinessConsultingChat() {
   }
 
   const reusePrompt = (prompt: UserPrompt) => {
-    // Allow up to 20 questions for free users
-    if (subscriptionPlan === "free" && messageCount >= 20) {
+    // Allow up to 2 questions for free users
+    if (subscriptionPlan === "free" && messageCount >= 2) {
       setShowSubscriptionModal(true)
       return
     }
@@ -512,10 +512,10 @@ export default function BusinessConsultingChat() {
                     <Crown className="w-3 h-3 mr-1" />
                     Premium
                   </>
-                ) : messageCount >= 20 ? (
+                ) : messageCount >= 2 ? (
                   <>Limit Reached</>
                 ) : (
-                  <>Free ({20 - messageCount} remaining)</>
+                  <>Free ({2 - messageCount} remaining)</>
                 )}
               </Badge>
               {subscriptionPlan === "free" && (

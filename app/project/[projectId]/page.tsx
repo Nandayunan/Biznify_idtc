@@ -6,6 +6,7 @@ import ChatConversation from "./chat-conversation";
 import ChatInput from "./chat-input";
 import SummarySection from "./summary-section";
 import { trpc } from "@/lib/trpc";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useChatContext } from "@/app/chat-context";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,8 @@ import {
   Clock,
   Trash2,
   Menu,
+  Check,
+  Zap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
@@ -41,13 +44,36 @@ export default function ProjectPage() {
   const params = useParams();
   const projectId = params?.projectId as string | undefined;
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [subscriptionPlan] = useState<"free" | "premium">("free");
+  const [subscriptionPlan, setSubscriptionPlan] = useState<"free" | "premium">("free")
   const [messageCount, setMessageCount] = useState(0);
   const { append } = useChatContext();
   const { handleSubmit, setMessages } = useChatContext();
   const [promptHistory, setPromptHistory] = useState<UserPrompt[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string>("");
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  // Tambahkan di dalam ProjectPage sebelum return
+  const handlePromptSubmit = (
+    event: React.FormEvent,
+    data: { data: { message: string } }
+  ) => {
+    if (subscriptionPlan === "free" && messageCount >= 2) {
+      setShowSubscriptionModal(true);
+      return;
+    }
+    handleSubmit(event, data);
+    setMessageCount((prev) => {
+      const next = prev + 1;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("messageCount", next.toString());
+      }
+      if (subscriptionPlan === "free" && next >= 2) {
+        setShowSubscriptionModal(true);
+      }
+      return next;
+    });
+  };
+
+
 
   void currentSessionId;
   void showSubscriptionModal;
@@ -135,15 +161,28 @@ export default function ProjectPage() {
     setCurrentSessionId(Date.now().toString());
     setSidebarOpen(false);
     setMessageCount(0);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("messageCount", "0");
+    }
     router.push("/");
   };
 
   const reusePrompt = (prompt: UserPrompt) => {
-    if (subscriptionPlan === "free" && messageCount >= 20) {
+    if (subscriptionPlan === "free" && messageCount >= 2) {
       setShowSubscriptionModal(true);
       return;
     }
     handleSubmit({} as MockEvent, { data: { message: prompt.content } });
+    setMessageCount((prev) => {
+      const next = prev + 1;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("messageCount", next.toString());
+      }
+      if (subscriptionPlan === "free" && next >= 2) {
+        setShowSubscriptionModal(true);
+      }
+      return next;
+    });
     setSidebarOpen(false);
   };
 
@@ -170,6 +209,13 @@ export default function ProjectPage() {
       return updated;
     });
   };
+
+  const handleSubscriptionChoice = (plan: "free" | "premium") => {
+    setSubscriptionPlan(plan)
+    localStorage.setItem("subscriptionPlan", plan)
+    localStorage.setItem("hasSeenSubscriptionModal", "true")
+    setShowSubscriptionModal(false)
+  }
 
   const handleLogout = async () => {
     await authClient.signOut({
@@ -204,6 +250,27 @@ export default function ProjectPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project]);
+
+
+  // Sync state with localStorage on mount (for SSR safety)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("messageCount");
+      const count = stored ? parseInt(stored, 10) : 0;
+      setMessageCount(count);
+      // Cek langsung jika sudah limit, agar modal muncul setelah reload
+      if (subscriptionPlan === "free" && count >= 2) {
+        setShowSubscriptionModal(true);
+      }
+    }
+  }, [subscriptionPlan]);
+
+  // Show modal automatically if already over limit (e.g. after reload)
+  useEffect(() => {
+    if (subscriptionPlan === "free" && messageCount >= 2) {
+      setShowSubscriptionModal(true);
+    }
+  }, [messageCount, subscriptionPlan]);
 
   if (isLoading) {
     return (
@@ -240,9 +307,8 @@ export default function ProjectPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       {/* Header - Hanya tergeser di desktop, tidak di mobile */}
       <div
-        className={`fixed top-0 right-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-white/10 transition-all duration-300 ease-in-out ${
-          sidebarOpen ? "lg:left-64 lg:sm:left-80" : "left-0"
-        }`}
+        className={`fixed top-0 right-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-white/10 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:left-64 lg:sm:left-80" : "left-0"
+          }`}
       >
         <header className="w-full px-2 sm:px-4 py-3 flex items-center justify-between gap-2">
           {/* Sidebar Toggle Button */}
@@ -278,34 +344,29 @@ export default function ProjectPage() {
             </div>
           </div>
 
-          {/* Plan Badge & Upgrade Button */}
+
+          {/* Plan Badge & Upgrade Button - paling kanan */}
           <div className="flex items-center gap-2 flex-shrink-0 justify-end w-auto">
             <Badge
-              className={`${
-                subscriptionPlan === "premium"
-                  ? "bg-gradient-to-r from-purple-500 to-pink-500"
-                  : "bg-slate-600"
-              } text-white border-0 px-2 md:px-3 py-1 text-xs`}
+              className={`${subscriptionPlan === "premium" ? "bg-gradient-to-r from-purple-500 to-pink-500" : "bg-slate-600"
+                } text-white border-0 px-3 py-1`}
             >
               {subscriptionPlan === "premium" ? (
                 <>
                   <Crown className="w-3 h-3 mr-1" />
-                  <span className="hidden sm:inline">Premium</span>
+                  Premium
                 </>
-              ) : messageCount >= 20 ? (
-                <>Limit</>
+              ) : messageCount >= 2 ? (
+                <>Limit Reached</>
               ) : (
-                <>
-                  <span className="hidden sm:inline">Free </span>(
-                  {20 - messageCount})
-                </>
+                <>Free ({2 - messageCount} remaining)</>
               )}
             </Badge>
             {subscriptionPlan === "free" && (
               <Button
                 onClick={() => setShowSubscriptionModal(true)}
                 size="sm"
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-lg px-2 md:px-3 py-1 text-xs"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-lg px-3 py-1 text-xs"
               >
                 Upgrade
               </Button>
@@ -313,6 +374,130 @@ export default function ProjectPage() {
           </div>
         </header>
       </div>
+
+      {/* Subscription Modal */}
+      {showSubscriptionModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl max-w-md sm:max-w-2xl md:max-w-4xl w-full relative overflow-y-auto max-h-[90vh]">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowSubscriptionModal(false)}
+              className="absolute top-4 right-4 text-white bg-black/30 hover:bg-black/50 rounded-full p-2 z-10"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <CardHeader className="text-center pb-4 sm:pb-6">
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Crown className="w-8 h-8 text-white" />
+                </div>
+              </div>
+              <CardTitle className="text-3xl font-bold text-white mb-2">Choose Your Business Plan</CardTitle>
+              <p className="text-slate-300 text-lg">Get expert business consulting advice tailored to your needs</p>
+            </CardHeader>
+
+            <CardContent className="p-4 sm:p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {/* Free Plan */}
+                <Card className="bg-white/5 border-white/20 hover:bg-white/10 transition-all duration-300 relative">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="text-center mb-6">
+                      <div className="w-12 h-12 bg-gradient-to-r from-slate-500 to-slate-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <Zap className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-white mb-2">Free Access</h3>
+                      <div className="text-4xl font-bold text-white mb-1">Rp 0</div>
+                      <p className="text-slate-400">Limited Access</p>
+                    </div>
+
+                    <div className="space-y-3 mb-8">
+                      <div className="flex items-center gap-3">
+                        <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-slate-200">20 questions per session</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-slate-200">Basic business advice</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <X className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                        <span className="text-slate-400 line-through">Consultation summaries</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <X className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                        <span className="text-slate-400 line-through">Unlimited conversations</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={() => handleSubscriptionChoice("free")}
+                      variant="outline"
+                      className="w-full bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/50 rounded-xl py-3 font-medium"
+                    >
+                      Start Free
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Premium Plan */}
+                <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-400/30 hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-300 relative">
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 px-4 py-1">
+                      Most Popular
+                    </Badge>
+                  </div>
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="text-center mb-6">
+                      <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <Crown className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-white mb-2">Premium Access</h3>
+                      <div className="text-4xl font-bold text-white mb-1">Rp 50,000</div>
+                      <p className="text-purple-200">Unlimited Access</p>
+                    </div>
+
+                    <div className="space-y-3 mb-8">
+                      <div className="flex items-center gap-3">
+                        <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-white font-medium">Unlimited questions</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-white font-medium">Advanced business strategies</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-white font-medium">Consultation summaries</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-white font-medium">Priority support</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-white font-medium">Export chat history</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={() => handleSubscriptionChoice("premium")}
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 rounded-xl py-3 font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      Upgrade to Premium
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="text-center mt-4 sm:mt-8">
+                <p className="text-slate-400 text-sm">You can upgrade or change your plan anytime in settings</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
@@ -323,9 +508,8 @@ export default function ProjectPage() {
 
       {/* Main Content Area - Hanya margin di desktop */}
       <div
-        className={`relative z-10 pt-16 h-screen transition-all duration-300 ease-in-out ${
-          sidebarOpen ? "lg:ml-64 lg:sm:ml-80" : "ml-0"
-        }`}
+        className={`relative z-10 pt-16 h-screen transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:ml-64 lg:sm:ml-80" : "ml-0"
+          }`}
       >
         <div className="h-full p-4 mt-2">
           {/* Desktop Layout with Resizable Panels */}
@@ -339,7 +523,7 @@ export default function ProjectPage() {
                 <ChatConversation />
               </div>
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
-                <ChatInput />
+                <ChatInput onPromptSubmit={handlePromptSubmit} />
               </div>
             </div>
 
@@ -350,9 +534,8 @@ export default function ProjectPage() {
             >
               {/* Resize Handle */}
               <div
-                className={`absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-purple-500/50 transition-colors duration-200 ${
-                  isResizing ? "bg-purple-500" : "bg-transparent"
-                } group`}
+                className={`absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-purple-500/50 transition-colors duration-200 ${isResizing ? "bg-purple-500" : "bg-transparent"
+                  } group`}
                 onMouseDown={handleMouseDown}
               >
                 {/* Visual indicator */}
@@ -374,7 +557,7 @@ export default function ProjectPage() {
             </div>
             {/* ChatInput - Fixed height */}
             <div className="flex-shrink-0 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
-              <ChatInput />
+              <ChatInput onPromptSubmit={handlePromptSubmit} />
             </div>
             {/* SummarySection - Remaining space, scrollable */}
             <div className="flex-1 overflow-y-auto bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
@@ -386,9 +569,8 @@ export default function ProjectPage() {
 
       {/* Sidebar - Fixed position */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 sm:w-80 bg-black/90 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 sm:w-80 bg-black/90 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
