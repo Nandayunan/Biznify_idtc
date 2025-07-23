@@ -13,7 +13,7 @@ export default function BiznifyRobot({
 
       if (isMobile) {
         // Mobile: smaller size and centered
-        return "translate(0px, 50px) scale(0.6)";
+        return "translate(50px, 0px) scale(0.8)";
       } else {
         // Desktop: adjust based on sidebar
         const translateX = sidebarOpen ? "200px" : "90px";

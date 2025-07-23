@@ -322,7 +322,7 @@ export default function BusinessConsultingChat() {
       </div>
 
       {/* 3D Spline Background - Responsive positioning */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 scale-100 sm:scale-100 md:scale-100">
         <BiznifyRobot sidebarOpen={sidebarOpen} />
       </div>
 
